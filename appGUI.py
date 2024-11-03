@@ -3,7 +3,7 @@
 
 from bot import Bot
 import customtkinter as ctk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, Text, ttk
 import pandas as pd
 import PIL
 
@@ -133,6 +133,33 @@ class SendMessageWindow:
         # Create and place Send Messages button
         self.send_button = ctk.CTkButton(root, text="Send Messages", command=self.send_messages)
         self.send_button.pack(pady=20)
+        
+        # Create a Treeview widget for displaying the DataFrame
+        self.df_display = ttk.Treeview(root, show="headings")
+        self.df_display.pack(pady=20, fill="both", expand=True)
+
+        # Add vertical scrollbar to Treeview
+        self.scrollbar = ttk.Scrollbar(root, orient="vertical", command=self.df_display.yview)
+        self.df_display.configure(yscroll=self.scrollbar.set)
+        self.scrollbar.pack(side="right", fill="y")
+
+    def display_dataframe(self):
+        # Clear any existing content in the Treeview
+        self.df_display.delete(*self.df_display.get_children())
+
+        # Set up columns if DataFrame is loaded
+        if self.sheet is not None:
+            # Configure columns and headings in Treeview
+            self.df_display["column"] = list(self.sheet.columns)
+            for col in self.sheet.columns:
+                self.df_display.heading(col, text=col)
+                self.df_display.column(col, anchor="center", width=100)
+
+            # Insert each row of the DataFrame into the Treeview
+            for _, row in self.sheet.iterrows():
+                self.df_display.insert("", "end", values=list(row))
+        else:
+            messagebox.showinfo("Info", "No data loaded to display.")
 
     def load_file(self):
         '''Open a file dialog to select an Excel file, which is saved as the current 'sheet' attribute.'''
@@ -145,9 +172,10 @@ class SendMessageWindow:
                 # Load the Excel file into a DataFrame
                 self.sheet = pd.read_excel(file_path)
                 messagebox.showinfo("Success", "File loaded successfully.")
+                self.display_dataframe()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load file: {e}")
-
+                
     def send_messages(self):
         '''Ensure a file is loaded before sending messages'''
         if self.sheet is not None:
@@ -160,19 +188,96 @@ class SendMessageWindow:
             messagebox.showwarning("Warning", "Please load a file first.")
 
 class SendMessageTemplateWindow:
-    def __init__(self, master: ctk.CTk, bot: Bot):
-        self.master = master
+    def __init__(self, root: ctk.CTk, bot: Bot):
+        self.root = root
         self.bot = bot
         self.sheet = None  # This will hold the DataFrame after loading the file
+        self.template_content = ""
 
         # Set up the GUI
-        self.master.title("CASDbot")
-        self.master.geometry(WINDOWS_SIZE)
+        self.root.title("CASDbot")
+        self.root.geometry(WINDOWS_SIZE)  # Set a default size or use WINDOWS_SIZE
 
-        self.welcome_label = ctk.CTkLabel(master, text="Não implementado.", font=("Montserrat", 20))
-        self.welcome_label.pack(pady=20)
+        # Frame for buttons and controls
+        button_frame = ctk.CTkFrame(root)
+        button_frame.pack(pady=10)
+
+        # Create and place Load File button
+        self.load_button = ctk.CTkButton(button_frame, text="Load Excel File", command=self.load_file)
+        self.load_button.grid(row=0, column=0, padx=10)
+
+        # Create and place Send Messages button
+        self.send_button = ctk.CTkButton(button_frame, text="Send Messages", command=self.send_messages)
+        self.send_button.grid(row=0, column=1, padx=10)
+
+        # Template Text input
+        template_label = ctk.CTkLabel(root, text="Enter Template Text:")
+        template_label.pack(pady=(10, 0))
         
+        self.template_text = ctk.CTkTextbox(root, height=100, width=800)
+        self.template_text.pack(pady=(5, 15), padx=20)
 
+        # Frame for Treeview and DataFrame display
+        table_frame = ctk.CTkFrame(root)
+        table_frame.pack(padx=20, pady=10, fill="both", expand=True)
+
+        # Treeview widget to display the DataFrame
+        self.df_display = ttk.Treeview(table_frame, show="headings")
+        self.df_display.pack(side="left", fill="both", expand=True)
+
+        # Add vertical scrollbar to Treeview
+        self.scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.df_display.yview)
+        self.df_display.configure(yscroll=self.scrollbar.set)
+        self.scrollbar.pack(side="right", fill="y")
+
+    def send_messages(self):
+        '''Ensure a file is loaded before sending messages'''
+        if self.sheet is not None:
+            try:
+                # Update template_content
+                self.template_content = self.template_text.get("1.0", "end-1c")
+
+                sheet_with_messages = self.bot.gerar_mensagens(self.sheet,self.template_content)
+
+                self.bot.send_messages(sheet_with_messages)
+                messagebox.showinfo("Success", "Messages sent successfully.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to send messages: {e}")
+        else:
+            messagebox.showwarning("Warning", "Please load a file first.")
+    
+    def display_dataframe(self):
+        # Clear any existing content in the Treeview
+        self.df_display.delete(*self.df_display.get_children())
+
+        # Set up columns if DataFrame is loaded
+        if self.sheet is not None:
+            # Configure columns and headings in Treeview
+            self.df_display["column"] = list(self.sheet.columns)
+            for col in self.sheet.columns:
+                self.df_display.heading(col, text=col)
+                self.df_display.column(col, anchor="center", width=100)
+
+            # Insert each row of the DataFrame into the Treeview
+            for _, row in self.sheet.iterrows():
+                self.df_display.insert("", "end", values=list(row))
+        else:
+            messagebox.showinfo("Info", "No data loaded to display.")
+
+    def load_file(self):
+        '''Open a file dialog to select an Excel file, which is saved as the current 'sheet' attribute.'''
+        file_path = filedialog.askopenfilename(
+            title="Select Excel File", filetypes=(("Excel files", "*.xlsx"), ("All files", "*.*"))
+        )
+
+        if file_path:
+            try:
+                # Load the Excel file into a DataFrame
+                self.sheet = pd.read_excel(file_path)
+                messagebox.showinfo("Success", "File loaded successfully.")
+                self.display_dataframe()
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to load file: {e}")
 # Initialize the application
 if __name__ == "__main__":
     welcome_root = ctk.CTk()  # Use customtkinter's CTk as the welcome window
