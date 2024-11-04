@@ -1,7 +1,6 @@
 # app_gui.py
 # pip install google-auth google-auth-oauthlib google-auth-httplib2
 
-import os
 from bot import Bot
 import customtkinter as ctk
 from tkinter import filedialog, messagebox, Text, ttk
@@ -11,7 +10,6 @@ import PIL
 
 WINDOWS_SIZE = "1080x720"
 ICON = "icon.ico"
-ICON_XBM = "@icon.xbm"
 
 # Set the appearance mode and theme
 ctk.set_appearance_mode("System")  # "System", "Dark", or "Light"
@@ -22,10 +20,7 @@ class WelcomeWindow:
         self.master = master
         self.master.title("CASDbot - Welcome")
         self.master.geometry(WINDOWS_SIZE)  # Size of the welcome window
-        if "nt" == os.name:
-            self.master.wm_iconbitmap(ICON)
-        else:
-            self.master.wm_iconbitmap(ICON_XBM)
+        self.master.wm_iconbitmap(ICON)
         
         # Welcome message
         self.welcome_label = ctk.CTkLabel(master, text="Bem vindo ao CASDbot,\n o enviador automático de mensagens do CASD!", font=("Montserrat", 20))
@@ -46,10 +41,7 @@ class LoginWindow:
         self.master = master
         self.master.title("CASDbot - Login")
         self.master.geometry(WINDOWS_SIZE)
-        if "nt" == os.name:
-            self.master.wm_iconbitmap(ICON)
-        else:
-            self.master.wm_iconbitmap(ICON_XBM)
+        self.master.wm_iconbitmap(ICON)
 
         # Username Label and Entry
         self.username_label = ctk.CTkLabel(master, text="Username")
@@ -74,7 +66,6 @@ class LoginWindow:
 
         # Here you can check the credentials
         if username == "admin" and password == "password":  # Example credentials
-            messagebox.showinfo("Successo", "Login bem sucedido!")
             self.master.destroy()  # Close login window
             self.open_main_window()  # Open the main application window
         else:
@@ -97,7 +88,6 @@ class SelectionWindow:
         self.master.geometry(WINDOWS_SIZE)
 
         # Select the window
-
         self.welcome_label = ctk.CTkLabel(master, text="O que você deseja fazer hoje?", font=("Montserrat", 20))
         self.welcome_label.pack(pady=20)
 
@@ -179,7 +169,6 @@ class SendMessageWindow:
             try:
                 # Load the Excel file into a DataFrame
                 self.sheet = pd.read_excel(file_path)
-                messagebox.showinfo("Success", "File loaded successfully.")
                 self.display_dataframe()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load file: {e}")
@@ -189,7 +178,6 @@ class SendMessageWindow:
         if self.sheet is not None:
             try:
                 self.bot.send_messages(self.sheet)
-                messagebox.showinfo("Success", "Messages sent successfully.")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to send messages: {e}")
         else:
@@ -245,10 +233,9 @@ class SendMessageTemplateWindow:
                 # Update template_content
                 self.template_content = self.template_text.get("1.0", "end-1c")
 
-                sheet_with_messages = self.bot.gerar_mensagens(self.sheet,self.template_content)
+                sheet_with_messages = self.bot.generate_messages_from_template(self.sheet,self.template_content)
 
                 self.bot.send_messages(sheet_with_messages)
-                messagebox.showinfo("Success", "Messages sent successfully.")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to send messages: {e}")
         else:
@@ -282,10 +269,10 @@ class SendMessageTemplateWindow:
             try:
                 # Load the Excel file into a DataFrame
                 self.sheet = pd.read_excel(file_path)
-                messagebox.showinfo("Success", "File loaded successfully.")
                 self.display_dataframe()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load file: {e}")
+
 # Initialize the application
 if __name__ == "__main__":
     welcome_root = ctk.CTk()  # Use customtkinter's CTk as the welcome window
