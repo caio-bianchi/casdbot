@@ -5,8 +5,6 @@ from bot import Bot
 import customtkinter as ctk
 from tkinter import filedialog, messagebox, Text, ttk
 import pandas as pd
-import PIL
-
 
 WINDOWS_SIZE = "1080x720"
 ICON = "icon.ico"
@@ -15,48 +13,71 @@ ICON = "icon.ico"
 ctk.set_appearance_mode("System")  # "System", "Dark", or "Light"
 ctk.set_default_color_theme("blue")  # Options: "blue", "dark-blue", "green"
 
-class WelcomeWindow:
-    def __init__(self, master):
+
+class BaseWindow:
+    def __init__(self, master, title, size=WINDOWS_SIZE, bg_color="lightblue"):
         self.master = master
-        self.master.title("CASDbot - Welcome")
-        self.master.geometry(WINDOWS_SIZE)  # Size of the welcome window
+        self.master.title(title)
+        self.master.geometry(size)
         self.master.wm_iconbitmap(ICON)
-        
+        self.master.configure(fg_color=bg_color)
+
+        # Central frame for content
+        self.center_frame = ctk.CTkFrame(master, fg_color=bg_color)
+        self.center_frame.pack(expand=True)
+
+    def close_window(self):
+        self.master.destroy()
+
+
+class WelcomeWindow(BaseWindow):
+    def __init__(self, master):
+        super().__init__(master, title="CASDbot - Welcome")
+
         # Welcome message
-        self.welcome_label = ctk.CTkLabel(master, text="Bem vindo ao CASDbot,\n o enviador automático de mensagens do CASD!", font=("Montserrat", 20))
+        self.welcome_label = ctk.CTkLabel(self.center_frame,
+                                          text="Bem vindo ao CASDbot,\n o enviador automático de mensagens do CASD!",
+                                          font=("Montserrat", 20))
         self.welcome_label.pack(pady=20)
 
         # Proceed button
-        self.proceed_button = ctk.CTkButton(master, text="Prosseguir para o Login", command=self.open_login_window)
+        self.proceed_button = ctk.CTkButton(self.center_frame, text="Prosseguir para o Login",
+                                            command=self.open_login_window)
         self.proceed_button.pack(pady=10)
 
     def open_login_window(self):
-        self.master.destroy()  # Close the welcome window
-        login_root = ctk.CTk()  # Create the login window
-        login_window = LoginWindow(login_root)
+        self.close_window()
+        login_root = ctk.CTk()
+        LoginWindow(login_root)
         login_root.mainloop()
 
-class LoginWindow:
-    def __init__(self, master):
-        self.master = master
-        self.master.title("CASDbot - Login")
-        self.master.geometry(WINDOWS_SIZE)
-        self.master.wm_iconbitmap(ICON)
+
+class LoginWindow(BaseWindow):
+    def __init__(self, master, bg_color="lightblue"):
+        super().__init__(master, title="CASDbot - Login")
+
+        self.master.bind("<Return>", lambda event: self.login())
 
         # Username Label and Entry
-        self.username_label = ctk.CTkLabel(master, text="Username")
-        self.username_label.pack(pady=10)
-        self.username_entry = ctk.CTkEntry(master)
-        self.username_entry.pack(pady=10)
+        self.username_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
+        self.username_frame.pack(pady=10, fill="x")
+
+        self.username_label = ctk.CTkLabel(self.username_frame, text="Username")
+        self.username_label.pack(pady=(0, 5))
+        self.username_entry = ctk.CTkEntry(self.username_frame)
+        self.username_entry.pack()
 
         # Password Label and Entry
-        self.password_label = ctk.CTkLabel(master, text="Password")
-        self.password_label.pack(pady=10)
-        self.password_entry = ctk.CTkEntry(master, show='*')
-        self.password_entry.pack(pady=10)
+        self.password_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
+        self.password_frame.pack(pady=10, fill="x")
+
+        self.password_label = ctk.CTkLabel(self.password_frame, text="Password")
+        self.password_label.pack(pady=(0, 5))
+        self.password_entry = ctk.CTkEntry(self.password_frame, show='*')
+        self.password_entry.pack()
 
         # Login Button
-        self.login_button = ctk.CTkButton(master, text="Login", corner_radius=32, command=self.login)
+        self.login_button = ctk.CTkButton(self.center_frame, text="Login", corner_radius=32, command=self.login)
         self.login_button.pack(pady=20)
 
     def login(self):
@@ -66,7 +87,7 @@ class LoginWindow:
 
         # Here you can check the credentials
         if username == "admin" and password == "password":  # Example credentials
-            self.master.destroy()  # Close login window
+            self.close_window()  # Close login window
             self.open_main_window()  # Open the main application window
         else:
             messagebox.showerror("Erro", "Usuário ou Senha incorretos.")
@@ -78,26 +99,24 @@ class LoginWindow:
         app = SelectionWindow(main_window, bot)
         main_window.mainloop()
 
-class SelectionWindow:
+
+class SelectionWindow(BaseWindow):
     def __init__(self, master: ctk.CTk, bot: Bot):
+        super().__init__(master, title="CASDbot")
         self.master = master
         self.bot = bot
 
-        # Set up the GUI
-        self.master.title("CASDbot")
-        self.master.geometry(WINDOWS_SIZE)
-
         # Select the window
-        self.welcome_label = ctk.CTkLabel(master, text="O que você deseja fazer hoje?", font=("Montserrat", 20))
+        self.welcome_label = ctk.CTkLabel(self.center_frame, text="O que você deseja fazer hoje?", font=("Montserrat", 20))
         self.welcome_label.pack(pady=20)
 
         # Send messages button
-        self.send_message_button = ctk.CTkButton(master, text="Enviar mensagens por planilha.", command=self.open_send_message_window)
+        self.send_message_button = ctk.CTkButton(self.center_frame, text="Enviar mensagens por planilha.", command=self.open_send_message_window)
         self.send_message_button.pack(pady=10)
 
-        self.send_message_button = ctk.CTkButton(master, text="Enviar mensagens por template.", command=self.open_send_message_template_window)
+        self.send_message_button = ctk.CTkButton(self.center_frame, text="Enviar mensagens por template.", command=self.open_send_message_template_window)
         self.send_message_button.pack(pady=10)
-    
+
     def open_send_message_window(self):
         # Create the main application window
         send_message_window = ctk.CTk()
@@ -113,6 +132,7 @@ class SelectionWindow:
         app = SendMessageTemplateWindow(send_email_window, bot)
         self.master.destroy()
         send_email_window.mainloop()
+
 
 class SendMessageWindow:
     def __init__(self, root: ctk.CTk, bot: Bot):
@@ -131,7 +151,7 @@ class SendMessageWindow:
         # Create and place Send Messages button
         self.send_button = ctk.CTkButton(root, text="Send Messages", command=self.send_messages)
         self.send_button.pack(pady=20)
-        
+
         # Create a Treeview widget for displaying the DataFrame
         self.df_display = ttk.Treeview(root, show="headings")
         self.df_display.pack(pady=20, fill="both", expand=True)
@@ -172,7 +192,7 @@ class SendMessageWindow:
                 self.display_dataframe()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load file: {e}")
-                
+
     def send_messages(self):
         '''Ensure a file is loaded before sending messages'''
         if self.sheet is not None:
@@ -182,6 +202,7 @@ class SendMessageWindow:
                 messagebox.showerror("Error", f"Failed to send messages: {e}")
         else:
             messagebox.showwarning("Warning", "Please load a file first.")
+
 
 class SendMessageTemplateWindow:
     def __init__(self, root: ctk.CTk, bot: Bot):
@@ -209,7 +230,7 @@ class SendMessageTemplateWindow:
         # Template Text input
         template_label = ctk.CTkLabel(root, text="Enter Template Text:")
         template_label.pack(pady=(10, 0))
-        
+
         self.template_text = ctk.CTkTextbox(root, height=100, width=800)
         self.template_text.pack(pady=(5, 15), padx=20)
 
@@ -240,7 +261,7 @@ class SendMessageTemplateWindow:
                 messagebox.showerror("Error", f"Failed to send messages: {e}")
         else:
             messagebox.showwarning("Warning", "Please load a file first.")
-    
+
     def display_dataframe(self):
         # Clear any existing content in the Treeview
         self.df_display.delete(*self.df_display.get_children())
@@ -272,6 +293,7 @@ class SendMessageTemplateWindow:
                 self.display_dataframe()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load file: {e}")
+
 
 # Initialize the application
 if __name__ == "__main__":
