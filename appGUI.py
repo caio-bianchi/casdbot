@@ -15,12 +15,13 @@ ctk.set_default_color_theme("blue")  # Options: "blue", "dark-blue", "green"
 
 
 class BaseWindow:
-    def __init__(self, master, title, size=WINDOWS_SIZE, bg_color="lightblue"):
+    def __init__(self, master, title, size=WINDOWS_SIZE, bg_color="lightblue", report=None):
         self.master = master
         self.master.title(title)
         self.master.geometry(size)
         self.master.wm_iconbitmap(ICON)
         self.master.configure(fg_color=bg_color)
+        self.report = report  # This will hold the DataFrame after loading the file
 
         # Central frame for content
         self.center_frame = ctk.CTkFrame(master, fg_color=bg_color)
@@ -35,6 +36,7 @@ class MessageWindow:
         self.root = root
         self.bot = bot
         self.sheet = None  # This will hold the DataFrame after loading the file
+        self.report = None  # This will hold the DataFrame after loading the file
 
         # Set up the GUI
         self.root.title("CASDbot")
@@ -53,14 +55,13 @@ class MessageWindow:
         self.load_button = ctk.CTkButton(self.top_frame, text="Load Excel File", command=self.load_file)
         self.load_button.pack(pady=5)
 
-        # Send Messages button (optional, if needed for each window)
-        # This can be omitted here and added only in specific subclasses if necessary
+        # Send Messages button
         self.send_button = ctk.CTkButton(self.top_frame, text="Send Messages", command=self.send_messages)
         self.send_button.pack(pady=5)
 
         # Treeview widget for displaying the DataFrame
         self.df_display = ttk.Treeview(self.bottom_frame, show="headings")
-        self.df_display.pack(fill="both", expand=True)
+        self.df_display.pack(side="left", fill="both", expand=True)
 
         # Add vertical scrollbar to Treeview
         self.scrollbar = ttk.Scrollbar(self.bottom_frame, orient="vertical", command=self.df_display.yview)
@@ -99,13 +100,16 @@ class MessageWindow:
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to load file: {e}")
 
+    def send_messages(self):
+        pass
+
     def close_window(self):
         self.root.destroy()
 
     def open_review_window(self):
         self.close_window()
         review = ctk.CTk()
-        ReviewWindow(review)
+        ReviewWindow(review, self.report)
         review.mainloop()
 
 
@@ -221,11 +225,11 @@ class SendMessageWindow(MessageWindow):
         '''Ensure a file is loaded before sending messages'''
         if self.sheet is not None:
             try:
-                self.bot.send_messages(self.sheet)
+                self.report = self.bot.send_messages(self.sheet)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to send messages: {e}")
 
-            #self.open_review_window()
+            self.open_review_window()
         else:
             messagebox.showwarning("Warning", "Please load a file first.")
 
@@ -249,27 +253,69 @@ class SendMessageTemplateWindow(MessageWindow):
 
                 sheet_with_messages = self.bot.generate_messages_from_template(self.sheet, self.template_content)
 
-                self.bot.send_messages(sheet_with_messages)
+                self.report = self.bot.send_messages(sheet_with_messages)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to send messages: {e}")
 
-            #self.open_review_window()
+            self.open_review_window()
         else:
             messagebox.showwarning("Warning", "Please load a file first.")
 
 
 class ReviewWindow(BaseWindow):
-    def __init__(self, master):
-        super().__init__(master, title="CASDbot")
+    def __init__(self, master, report=None):
+        super().__init__(master, title="CASDbot", report=report)
+
         # Treeview widget for displaying the DataFrame
-        self.df_display = ttk.Treeview(self.bottom_frame, show="headings")
-        self.df_display.pack(fill="both", expand=True)
+        self.df_display = ttk.Treeview(self.center_frame, show="headings")
+        self.df_display.pack(side="left", fill="both", expand=True)
 
         # Add vertical scrollbar to Treeview
-        self.scrollbar = ttk.Scrollbar(self.bottom_frame, orient="vertical", command=self.df_display.yview)
+        self.scrollbar = ttk.Scrollbar(self.center_frame, orient="vertical", command=self.df_display.yview)
         self.df_display.configure(yscroll=self.scrollbar.set)
         self.scrollbar.pack(side="right", fill="y")
 
+        # Download Report button
+        self.download_button = ctk.CTkButton(master, text="Download Report", command=self.download_report)
+        self.download_button.pack(pady=10)
+
+        self.display_dataframe()
+
+    def display_dataframe(self):
+        # Clear any existing content in the Treeview
+        self.df_display.delete(*self.df_display.get_children())
+
+        # Set up columns if DataFrame is loaded
+        if self.report is not None:
+            # Configure columns and headings in Treeview
+            self.df_display["column"] = list(self.report.columns)
+            for col in self.report.columns:
+                self.df_display.heading(col, text=col)
+                self.df_display.column(col, anchor="center", width=100)
+
+            # Insert each row of the DataFrame into the Treeview
+            for _, row in self.report.iterrows():
+                self.df_display.insert("", "end", values=list(row))
+        else:
+            messagebox.showinfo("Info", "No data loaded to display.")
+
+    def download_report(self):
+        # Check if the report is loaded
+        if self.report is not None:
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".xlsx",
+                filetypes=[("Excel files", "*.xlsx"), ("All files", "*.*")],
+                title="Save Report"
+            )
+
+            if file_path:
+                try:
+                    self.report.to_excel(file_path, index=False)
+                    messagebox.showinfo("Success", "Report downloaded successfully.")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to save report: {e}")
+        else:
+            messagebox.showwarning("Warning", "No report data to save.")
 
 # Initialize the application
 if __name__ == "__main__":

@@ -38,6 +38,7 @@
       <updated>1731256181191</updated>
       <workItem from="1731256185979" duration="13095000" />
       <workItem from="1731290610685" duration="7185000" />
+      <workItem from="1731418295286" duration="5727000" />
     </task>
     <servers />
   </component>
@@ -56,6 +57,6 @@
     </option>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/casdbot$appGUI.coverage" NAME="appGUI Coverage Results" MODIFIED="1731417579787" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/casdbot$appGUI.coverage" NAME="appGUI Coverage Results" MODIFIED="1731460659078" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
