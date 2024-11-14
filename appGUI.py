@@ -283,7 +283,7 @@ class ReviewWindow(BaseWindow):
         self.back_button = ctk.CTkButton(
             master, text="← Back", command=self.go_back, corner_radius=8
         )
-        self.back_button.pack(anchor="nw", padx=10, pady=10)
+        self.back_button.place(x=0, y=0)
 
         # Treeview widget for displaying the DataFrame
         self.df_display = ttk.Treeview(self.center_frame, show="headings")

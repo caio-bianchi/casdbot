@@ -41,7 +41,7 @@
       <workItem from="1731418295286" duration="6319000" />
       <workItem from="1731540889273" duration="5000" />
       <workItem from="1731540913572" duration="995000" />
-      <workItem from="1731613901014" duration="3521000" />
+      <workItem from="1731613901014" duration="4866000" />
     </task>
     <servers />
   </component>
@@ -61,6 +61,6 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/casdbot$Doctests_in_bot.coverage" NAME="Doctests in bot Coverage Results" MODIFIED="1731617002873" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/casdbot$appGUI.coverage" NAME="appGUI Coverage Results" MODIFIED="1731617599873" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/casdbot$appGUI.coverage" NAME="appGUI Coverage Results" MODIFIED="1731619061778" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
