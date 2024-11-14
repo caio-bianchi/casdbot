@@ -43,6 +43,12 @@ class MessageWindow:
         self.root.geometry(WINDOWS_SIZE)
         self.root.configure(fg_color=bg_color)
 
+        # "Back" button in the top-left corner
+        self.back_button = ctk.CTkButton(
+            root, text="← Back", command=self.go_back, corner_radius=8
+        )
+        self.back_button.pack(anchor="nw", padx=10, pady=10)
+
         # Top frame for buttons
         self.top_frame = ctk.CTkFrame(root, fg_color=bg_color)
         self.top_frame.pack(pady=10)
@@ -111,6 +117,14 @@ class MessageWindow:
         review = ctk.CTk()
         ReviewWindow(review, self.report)
         review.mainloop()
+
+    def go_back(self):
+        # Closes current window and returns to the SelectionWindow
+        self.close_window()
+        main_window = ctk.CTk()
+        bot = Bot()
+        SelectionWindow(main_window, bot)
+        main_window.mainloop()
 
 
 class WelcomeWindow(BaseWindow):
@@ -265,6 +279,11 @@ class SendMessageTemplateWindow(MessageWindow):
 class ReviewWindow(BaseWindow):
     def __init__(self, master, report=None):
         super().__init__(master, title="CASDbot", report=report)
+        # "Back" button in the top-left corner
+        self.back_button = ctk.CTkButton(
+            master, text="← Back", command=self.go_back, corner_radius=8
+        )
+        self.back_button.pack(anchor="nw", padx=10, pady=10)
 
         # Treeview widget for displaying the DataFrame
         self.df_display = ttk.Treeview(self.center_frame, show="headings")
@@ -316,6 +335,14 @@ class ReviewWindow(BaseWindow):
                     messagebox.showerror("Error", f"Failed to save report: {e}")
         else:
             messagebox.showwarning("Warning", "No report data to save.")
+
+    def go_back(self):
+        # Closes current window and returns to the SelectionWindow
+        self.close_window()
+        main_window = ctk.CTk()
+        bot = Bot()
+        SelectionWindow(main_window, bot)
+        main_window.mainloop()
 
 # Initialize the application
 if __name__ == "__main__":

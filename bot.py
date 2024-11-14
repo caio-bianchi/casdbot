@@ -7,13 +7,23 @@ from selenium.webdriver.common.keys import Keys # Enviar as mensagens
 from selenium.webdriver.common.by import By
 import time
 import urllib
+import socket
 
 TIME_TO_WAIT_MESSAGE_TO_BE_SENT = 10
 XPATH_SEND_MESSAGE_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div/div/p'
 
+
 class Bot:
     def __init__(self):
         pass
+
+    def is_connected(self):
+        """Checks if there is an active internet connection."""
+        try:
+            socket.create_connection(("8.8.8.8", 53), timeout=2)
+            return True
+        except OSError:
+            return False
 
     def send_messages(self, sheet: pd.DataFrame) -> pd.DataFrame:
         """
@@ -28,7 +38,7 @@ class Bot:
             pd.DataFrame: DataFrame contendo as colunas originais e uma nova coluna "Status", indicando
                         se a mensagem foi enviada com sucesso ou não.
         """
-        
+
         def wait_whatsapp_end_loading(browser) -> None:
             """ Aguarda o carregamento completo do WhatsApp Web """
             while len(browser.find_elements(By.ID, "side")) < 1:
@@ -44,11 +54,20 @@ class Bot:
             texto = urllib.parse.quote(message)
             link = f"https://web.whatsapp.com/send?phone={numero}&text={texto}"
 
+            # Check for internet connection
+            if not self.is_connected():
+                status_list.append("Falha: Internet não disponível")
+                print(f"Erro ao enviar mensagem para {numero}: Internet não disponível")
+                continue
+
             try:
                 browser.get(link)
                 wait_whatsapp_end_loading(browser)
                 browser.find_element(By.XPATH, XPATH_SEND_MESSAGE_FIELD).send_keys(Keys.ENTER)
                 time.sleep(TIME_TO_WAIT_MESSAGE_TO_BE_SENT)  # Aguarda para assegurar o envio da mensagem
+                if not self.is_connected():
+                    status_list.append("Falha: Internet não disponível")
+                    continue
                 status_list.append("Sucesso")  # Se o envio foi bem-sucedido
 
             except Exception as e:
