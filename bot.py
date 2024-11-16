@@ -17,7 +17,7 @@ class Bot:
     def __init__(self):
         pass
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         """Checks if there is an active internet connection."""
         try:
             socket.create_connection(("8.8.8.8", 53), timeout=2)
@@ -27,34 +27,45 @@ class Bot:
 
     def send_messages(self, sheet: pd.DataFrame) -> pd.DataFrame:
         """
-        Envia mensagens de WhatsApp para números listados em um DataFrame e retorna um novo DataFrame com o status do envio.
+        Sends WhatsApp messages to numbers listed in a DataFrame and returns a new DataFrame with the send status.
 
-        Parâmetros:
-            sheet (pd.DataFrame): DataFrame contendo as colunas "Numero" e "Mensagem".
-                                A coluna "Numero" deve conter os números de telefone e
-                                a coluna "Mensagem" as mensagens personalizadas para cada número.
+        Parameters:
+            sheet (pd.DataFrame): DataFrame containing the columns "Numero" and "Mensagem".
+                                  The "Numero" column should have phone numbers,
+                                  and the "Mensagem" column should have the personalized messages for each number.
 
-        Retorna:
-            pd.DataFrame: DataFrame contendo as colunas originais e uma nova coluna "Status", indicando
-                        se a mensagem foi enviada com sucesso ou não.
+        Returns:
+            pd.DataFrame: DataFrame containing the original columns and a new "Status" column
+                          indicating whether the message was successfully sent or not.
         """
 
         def wait_whatsapp_end_loading(browser) -> None:
-            """ Aguarda o carregamento completo do WhatsApp Web """
+            """Waits for WhatsApp Web to fully load."""
             while len(browser.find_elements(By.ID, "side")) < 1:
                 time.sleep(1)
-            time.sleep(2)  # Espera adicional para assegurar o carregamento
+            time.sleep(2)  # Additional wait to ensure loading is complete
 
-        # Inicializa o navegador (Chrome, neste exemplo)
+        def was_message_sent(browser) -> bool:
+            """
+            Checks if the message appears in the chat to confirm it was sent.
+            This depends on WhatsApp UI changes.
+            """
+            try:
+                sent_messages = browser.find_elements(By.CSS_SELECTOR, '.message-out')  # Outgoing message class
+                return len(sent_messages) > 0
+            except Exception:
+                return False
+
+        # Initialize the browser (Chrome, in this example)
         browser = webdriver.Chrome()
-        status_list = []  # Lista para armazenar o status de cada envio
+        status_list = []  # List to store the status of each send attempt
 
         for i, message in enumerate(sheet['Mensagem']):
             numero = sheet.loc[i, "Numero"]
             texto = urllib.parse.quote(message)
             link = f"https://web.whatsapp.com/send?phone={numero}&text={texto}"
 
-            # Check for internet connection
+            # Check for internet connection before attempting to send a message
             if not self.is_connected():
                 status_list.append("Falha: Internet não disponível")
                 print(f"Erro ao enviar mensagem para {numero}: Internet não disponível")
@@ -63,21 +74,36 @@ class Bot:
             try:
                 browser.get(link)
                 wait_whatsapp_end_loading(browser)
-                browser.find_element(By.XPATH, XPATH_SEND_MESSAGE_FIELD).send_keys(Keys.ENTER)
-                time.sleep(TIME_TO_WAIT_MESSAGE_TO_BE_SENT)  # Aguarda para assegurar o envio da mensagem
+
+                # Check again for internet connection after loading the page
                 if not self.is_connected():
-                    status_list.append("Falha: Internet não disponível")
+                    status_list.append("Falha: Internet não disponível durante envio")
+                    print(f"Erro ao enviar mensagem para {numero}: Internet não disponível durante envio")
                     continue
-                status_list.append("Sucesso")  # Se o envio foi bem-sucedido
+
+                # Send the message
+                browser.find_element(By.XPATH, XPATH_SEND_MESSAGE_FIELD).send_keys(Keys.ENTER)
+                time.sleep(TIME_TO_WAIT_MESSAGE_TO_BE_SENT)  # Ensure the message is sent
+
+                # Confirm if the message was actually sent
+                if was_message_sent(browser):
+                    status_list.append("Sucesso")
+                else:
+                    status_list.append("Falha: Mensagem não enviada")
+                    print(f"Erro ao enviar mensagem para {numero}: Mensagem não confirmada")
 
             except Exception as e:
-                status_list.append("Falha")  # Caso ocorra algum erro
+                # Check if the message might have been sent despite an exception
+                if was_message_sent(browser):
+                    status_list.append("Sucesso")
+                else:
+                    status_list.append(f"Falha: {str(e)}")
                 print(f"Erro ao enviar mensagem para {numero}: {e}")
 
-        # Fecha o navegador após o envio
+        # Close the browser after sending
         browser.quit()
 
-        # Adiciona a coluna 'Status' ao DataFrame
+        # Add the 'Status' column to the DataFrame
         sheet['Status'] = status_list
         return sheet
 
