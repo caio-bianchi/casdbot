@@ -1,6 +1,6 @@
 # app_gui.py
 # pip install google-auth google-auth-oauthlib google-auth-httplib2
-
+import os
 from bot import Bot
 import customtkinter as ctk
 from tkinter import filedialog, messagebox, Text, ttk
@@ -10,7 +10,7 @@ import PIL
 
 WINDOWS_SIZE = "1080x720"
 ICON = "icon.ico"
-
+ICON_LINUX = "@icon.xbm"
 # Set the appearance mode and theme
 ctk.set_appearance_mode("System")  # "System", "Dark", or "Light"
 ctk.set_default_color_theme("blue")  # Options: "blue", "dark-blue", "green"
@@ -20,7 +20,11 @@ class WelcomeWindow:
         self.master = master
         self.master.title("CASDbot - Welcome")
         self.master.geometry(WINDOWS_SIZE)  # Size of the welcome window
-        self.master.wm_iconbitmap(ICON)
+        if "nt" == os.name:
+            icon = ICON
+        else:
+            icon = ICON_LINUX
+        self.master.wm_iconbitmap(icon)
         
         # Welcome message
         self.welcome_label = ctk.CTkLabel(master, text="Bem vindo ao CASDbot,\n o enviador automático de mensagens do CASD!", font=("Montserrat", 20))
@@ -41,7 +45,11 @@ class LoginWindow:
         self.master = master
         self.master.title("CASDbot - Login")
         self.master.geometry(WINDOWS_SIZE)
-        self.master.wm_iconbitmap(ICON)
+        if "nt" == os.name:
+            icon = ICON
+        else:
+            icon = ICON_LINUX
+        self.master.wm_iconbitmap(icon)
 
         # Username Label and Entry
         self.username_label = ctk.CTkLabel(master, text="Username")
