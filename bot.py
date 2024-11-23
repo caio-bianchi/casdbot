@@ -5,11 +5,31 @@ import urllib.parse
 from selenium import webdriver # Abrir navegador
 from selenium.webdriver.common.keys import Keys # Enviar as mensagens
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 import urllib
 
-TIME_TO_WAIT_MESSAGE_TO_BE_SENT = 10
+MESSAGE_DT = 7
 XPATH_SEND_MESSAGE_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div/div/p'
+ADDITIONAL_TOOLS_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/div/div/div/span'
+ATTACHMENTS_BUTTON = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/button'
+MEDIA_XPATH = '//input[@accept="image/*,video/mp4,video/3gpp,video/quicktime"]'
+SEND_MEDIA_XPATH = '//*[@id="app"]/div/div[3]/div[2]/div[2]/span/div/div/div/div[2]/div/div[2]/div[2]/div/div'
+MESSAGE_SEPARATOR = '[break]'
+FILE_SEPARATOR = '[file]'
+
+def bot_message_parser(message: str) -> list[tuple[bool, str]]:
+    message = message.split(FILE_SEPARATOR)
+    messages_list = []
+    for i in range(len(message)):
+        if i % 2 == 0:
+            chunk = message[i].split(MESSAGE_SEPARATOR)
+            for line in chunk:
+                messages_list.append((False, line))
+        else:
+            messages_list.append((True, message[i].replace(' ', '')))
+    return messages_list
 
 class Bot:
     def __init__(self):
@@ -33,7 +53,7 @@ class Bot:
             """ Aguarda o carregamento completo do WhatsApp Web """
             while len(browser.find_elements(By.ID, "side")) < 1:
                 time.sleep(1)
-            time.sleep(2)  # Espera adicional para assegurar o carregamento
+            time.sleep(5)  # Espera adicional para assegurar o carregamento
 
         # Inicializa o navegador (Chrome, neste exemplo)
         browser = webdriver.Chrome()
@@ -41,16 +61,37 @@ class Bot:
 
         for i, message in enumerate(sheet['Mensagem']):
             numero = sheet.loc[i, "Numero"]
-            texto = urllib.parse.quote(message)
-            link = f"https://web.whatsapp.com/send?phone={numero}&text={texto}"
+            messages = bot_message_parser(message)
+            link = f"https://web.whatsapp.com/send?phone={numero}"
 
             try:
                 browser.get(link)
                 wait_whatsapp_end_loading(browser)
-                browser.find_element(By.XPATH, XPATH_SEND_MESSAGE_FIELD).send_keys(Keys.ENTER)
-                time.sleep(TIME_TO_WAIT_MESSAGE_TO_BE_SENT)  # Aguarda para assegurar o envio da mensagem
+            except Exception as e:
+                status_list.append("Falha")  # Caso ocorra algum erro
+                print(f"Erro ao abrir o link do whatsapp para {numero}: {e}")
+            
+            try:
+                for is_file, text in messages:
+                    if is_file:
+                        WebDriverWait(browser, MESSAGE_DT).until(
+                            EC.presence_of_element_located((By.XPATH, ATTACHMENTS_BUTTON))
+                        ).click()
+                        WebDriverWait(browser, MESSAGE_DT).until(
+                            EC.presence_of_element_located((By.XPATH, MEDIA_XPATH))
+                        ).send_keys(text)
+                        WebDriverWait(browser, MESSAGE_DT).until(
+                            EC.presence_of_element_located((By.XPATH, SEND_MEDIA_XPATH))
+                        ).click()
+                    else:
+                        WebDriverWait(browser, MESSAGE_DT).until(
+                            EC.presence_of_element_located((By.XPATH, XPATH_SEND_MESSAGE_FIELD))
+                        ).send_keys(text)
+                        WebDriverWait(browser, MESSAGE_DT).until(
+                            EC.presence_of_element_located((By.XPATH, XPATH_SEND_MESSAGE_FIELD))
+                        ).send_keys(Keys.ENTER)
+                    time.sleep(MESSAGE_DT)  # Aguarda para assegurar o envio da mensagem
                 status_list.append("Sucesso")  # Se o envio foi bem-sucedido
-
             except Exception as e:
                 status_list.append("Falha")  # Caso ocorra algum erro
                 print(f"Erro ao enviar mensagem para {numero}: {e}")
