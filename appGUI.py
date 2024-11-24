@@ -7,10 +7,12 @@ from tkinter import filedialog, messagebox, Text, ttk
 import pandas as pd
 
 WINDOWS_SIZE = "1080x720"
-ICON = "icon.ico"
-ICON_LINUX = "@icon.xbm"
+if "nt" == os.name:
+    ICON = "icon.ico"    # for windows
+else:
+    ICON = "@icon.xbm"   # for linux
 # Set the appearance mode and theme
-ctk.set_appearance_mode("System")  # "System", "Dark", or "Light"
+ctk.set_appearance_mode("Light")  # "System", "Dark", or "Light"
 ctk.set_default_color_theme("blue")  # Options: "blue", "dark-blue", "green"
 
 
