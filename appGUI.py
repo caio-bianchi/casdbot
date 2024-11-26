@@ -216,6 +216,12 @@ class SelectionWindow(BaseWindow):
         self.send_message_button = ctk.CTkButton(self.center_frame, text="Enviar mensagens por template.", command=self.open_send_message_template_window)
         self.send_message_button.pack(pady=10)
 
+        self.send_email_button = ctk.CTkButton(self.center_frame, text="Enviar e-mails por planilha.", command=self.open_send_email_window)
+        self.send_email_button.pack(pady=10)
+        
+        self.send_email_button = ctk.CTkButton(self.center_frame, text="Enviar e-mails por template.", command=self.open_send_email_template_window)
+        self.send_email_button.pack(pady=10)
+
     def open_send_message_window(self):
         # Create the main application window
         send_message_window = ctk.CTk()
@@ -226,12 +232,27 @@ class SelectionWindow(BaseWindow):
 
     def open_send_message_template_window(self):
         # Create the main application window
+        send_message_window = ctk.CTk()
+        bot = Bot()
+        app = SendMessageTemplateWindow(send_message_window, bot)
+        self.master.destroy()
+        send_message_window.mainloop()
+
+    def open_send_email_window(self):
+        # Create the main application window
         send_email_window = ctk.CTk()
         bot = Bot()
-        app = SendMessageTemplateWindow(send_email_window, bot)
+        app = SendEmailWindow(send_email_window, bot)
         self.master.destroy()
         send_email_window.mainloop()
 
+    def open_send_email_template_window(self):
+        # Create the main application window
+        send_email_window = ctk.CTk()
+        bot = Bot()
+        app = SendEmailTemplateWindow(send_email_window, bot)
+        self.master.destroy()
+        send_email_window.mainloop()
 
 class SendMessageWindow(MessageWindow):
     def __init__(self, root: ctk.CTk, bot: Bot):
@@ -283,9 +304,54 @@ class SendMessageTemplateWindow(MessageWindow):
                 # Update template_content
                 self.template_content = self.template_text.get("1.0", "end-1c")
 
-                sheet_with_messages = self.bot.generate_messages_from_template(self.sheet, self.template_content)
+                sheet_with_messages = self.bot.generate_messages_from_template(self.sheet, self.template_content, whatsapp_flag=True)
 
                 self.report = self.bot.send_messages(sheet_with_messages)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to send messages: {e}")
+
+            self.open_review_window()
+        else:
+            messagebox.showwarning("Warning", "Please load a file first.")
+
+
+class SendEmailWindow(MessageWindow):
+    def __init__(self, root: ctk.CTk, bot: Bot):
+        super().__init__(root, bot)
+
+    def send_messages(self):
+        '''Ensure a file is loaded before sending emails'''
+        if self.sheet is not None:
+            try:
+                self.report = self.bot.send_emails(self.sheet)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to send emails: {e}")
+
+            self.open_review_window()
+        else:
+            messagebox.showwarning("Warning", "Please load a file first.")
+
+
+class SendEmailTemplateWindow(MessageWindow):
+    def __init__(self, root: ctk.CTk, bot: Bot):
+        super().__init__(root, bot)
+        # Template Text input
+        template_label = ctk.CTkLabel(self.top_frame, text="Insira o Texto Template:")
+        template_label.pack(pady=(10, 0))
+
+        self.template_text = ctk.CTkTextbox(self.top_frame, height=100, width=800)
+        self.template_text.pack(pady=(5, 15), padx=20)
+    
+    def send_messages(self):
+        '''Ensure a file is loaded before sending emails'''
+        if self.sheet is not None:
+            try:
+                # Update template_content
+                self.template_content = self.template_text.get("1.0", "end-1c")
+
+                sheet_with_messages = self.bot.generate_messages_from_template(self.sheet, self.template_content, whatsapp_flag=False)
+
+                self.report = self.bot.send_emails(sheet_with_messages)
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to send messages: {e}")
 

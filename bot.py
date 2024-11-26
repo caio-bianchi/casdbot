@@ -1,6 +1,9 @@
 from structures import *
 import pandas as pd
 import urllib.parse
+from email.message import EmailMessage
+import ssl
+import smtplib
 
 from selenium import webdriver # Abrir navegador
 from selenium.webdriver.common.keys import Keys # Enviar as mensagens
@@ -22,11 +25,12 @@ MESSAGE_SEPARATOR = '[break]'
 FILE_SEPARATOR = '[file]'
 QUEUE_SEPARATOR = '[queue]'
 
+SENDER_EMAIL = 'andresafira2004@gmail.com'
+PASSWORD = 'zkde kdnb hcyd ixna'
 
 class Bot:
     def __init__(self):
         self.file_queue = []
-        pass
 
     def clear_queue(self):
         self.file_queue = []
@@ -162,7 +166,41 @@ class Bot:
         sheet['Status'] = status_list
         return sheet
 
-    def generate_messages_from_template(self, sheet: pd.DataFrame, template: str) -> pd.DataFrame:
+    def send_emails(self, sheet: pd.DataFrame) -> pd.DataFrame:
+        # Initialize the browser (Chrome, in this example)
+        status_list = []  # List to store the status of each send attempt
+
+        context = ssl.create_default_context()
+
+        for i, message in enumerate(sheet['Mensagem']):
+            receiver = sheet.loc[i, "Email"]
+            
+            em = EmailMessage()
+            em['From'] = SENDER_EMAIL
+            em['To'] = receiver
+            em['Subject'] = 'CASD'
+            em.set_content(message)
+            # Check for internet connection before attempting to send a message
+            if not self.is_connected():
+                status_list.append("Falha: Internet não disponível")
+                print(f"Erro ao enviar mensagem para {receiver}: Internet não disponível")
+                continue
+
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as interface:
+                try:
+                    interface.login(SENDER_EMAIL, PASSWORD)
+                    interface.sendmail(SENDER_EMAIL, receiver, em.as_string())
+                    status_list.append("Sucesso")  # Se o envio foi bem-sucedido
+                except Exception as e:
+                    # Check if the message might have been sent despite an exception
+                    status_list.append(f"Falha: {str(e)}")
+                    print(f"Erro ao enviar mensagem para {receiver}: {e}")
+
+        # Add the 'Status' column to the DataFrame
+        sheet['Status'] = status_list
+        return sheet
+
+    def generate_messages_from_template(self, sheet: pd.DataFrame, template: str, whatsapp_flag: bool) -> pd.DataFrame:
         """
         Gera mensagens personalizadas com base em um template e nos atributos de um DataFrame.
 
@@ -172,6 +210,9 @@ class Bot:
             template (str): Um texto modelo contendo placeholders (marcadores) que serão substituídos
                             pelos valores das colunas do DataFrame. Os placeholders devem corresponder
                             aos nomes das colunas em `sheet`, por exemplo, "{Nome}".
+            whatsapp_flag (bool): Uma flaq que determina o meio de envio da mensagem, sendo:
+                            0: WhatsApp
+                            1: e-mail
 
         Retorna:
             pd.DataFrame: Um DataFrame do Pandas contendo as colunas "Nome", "Numero" e "Mensagem",
@@ -205,12 +246,17 @@ class Bot:
                 mensagens.append("Erro ao gerar mensagem para esta linha.")
 
         # Verifica se as colunas necessárias estão presentes no DataFrame de saída
-        if "Nome" not in sheet.columns or "Numero" not in sheet.columns:
-            raise ValueError("O DataFrame deve conter colunas 'Nome' e 'Numero'.")
+        if whatsapp_flag:
+            required_field = "Numero"
+        else:
+            required_field = "Email"
+
+        if "Nome" not in sheet.columns or required_field not in sheet.columns:
+            raise ValueError(f"O DataFrame deve conter colunas 'Nome' e '{required_field}'.")
 
         # Retorna um DataFrame com as mensagens geradas
         return pd.DataFrame({
             "Nome": sheet["Nome"],
-            "Numero": sheet["Numero"],
+            required_field: sheet[required_field],
             "Mensagem": mensagens
         })
