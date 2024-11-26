@@ -253,12 +253,28 @@ class SendMessageWindow(MessageWindow):
 class SendMessageTemplateWindow(MessageWindow):
     def __init__(self, root: ctk.CTk, bot: Bot):
         super().__init__(root, bot)
+        self.bot.clear_queue()
         # Template Text input
         template_label = ctk.CTkLabel(self.top_frame, text="Enter Template Text:")
         template_label.pack(pady=(10, 0))
 
         self.template_text = ctk.CTkTextbox(self.top_frame, height=100, width=800)
         self.template_text.pack(pady=(5, 15), padx=20)
+        
+        self.add_file_button = ctk.CTkButton(self.top_frame, text="Adicionar Arquivo", command=self.load_files)
+        self.add_file_button.pack(pady=10)
+    
+    def load_files(self):
+        '''Open a file dialog to select the file to be sent.'''
+        file_path = filedialog.askopenfilename(
+            title="Select File", filetypes=(("Image Files", "*.png"), ("All files", "*.*"))
+        )
+
+        if file_path:
+            try:
+                self.bot.add_to_queue(file_path)
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to load file: {e}")
 
     def send_messages(self):
         '''Ensure a file is loaded before sending messages'''

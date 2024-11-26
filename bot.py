@@ -11,39 +11,59 @@ import time
 import urllib
 import socket
 
-MESSAGE_DT = 7
+MESSAGE_DT = 12
 XPATH_SEND_MESSAGE_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div/div/p'
 ADDITIONAL_TOOLS_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/div/div/div/span'
 ATTACHMENTS_BUTTON = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/button'
 MEDIA_XPATH = '//input[@accept="image/*,video/mp4,video/3gpp,video/quicktime"]'
+DOCS_XPATH  = '//input[@accept="*"]'
 SEND_MEDIA_XPATH = '//*[@id="app"]/div/div[3]/div[2]/div[2]/span/div/div/div/div[2]/div/div[2]/div[2]/div/div'
 MESSAGE_SEPARATOR = '[break]'
 FILE_SEPARATOR = '[file]'
-
-def bot_message_parser(message: str) -> list[tuple[bool, str]]:
-    message = message.split(FILE_SEPARATOR)
-    messages_list = []
-    for i in range(len(message)):
-        if i % 2 == 0:
-            chunk = message[i].split(MESSAGE_SEPARATOR)
-            for line in chunk:
-                messages_list.append((False, line))
-        else:
-            messages_list.append((True, message[i].replace(' ', '')))
-    return messages_list
+QUEUE_SEPARATOR = '[queue]'
 
 
 class Bot:
     def __init__(self):
+        self.file_queue = []
         pass
+
+    def clear_queue(self):
+        self.file_queue = []
+
+    def add_to_queue(self, file_path: str):
+        self.file_queue.append(file_path)
 
     def is_connected(self) -> bool:
         """Checks if there is an active internet connection."""
         try:
             socket.create_connection(("8.8.8.8", 53), timeout=2)
             return True
-        except OSError:
+        except:
             return False
+    
+    def inner_message_parser(self, message: str) -> list[tuple[bool, str]]:
+        message = message.split(FILE_SEPARATOR)
+        messages_list = []
+        for i in range(len(message)):
+            if i % 2 == 0:
+                chunk = message[i].split(MESSAGE_SEPARATOR)
+                for line in chunk:
+                    messages_list.append((False, line))
+            else:
+                messages_list.append((True, message[i].replace(' ', '')))
+        return messages_list
+        
+
+    def message_parser(self, message: str) -> list[tuple[bool, str]]:
+        message = message.split(QUEUE_SEPARATOR)
+        messages_list = []
+
+        for i in range(len(message)):
+            messages_list += self.inner_message_parser(message[i])
+            if i < len(self.file_queue):
+                messages_list.append((True, self.file_queue[i]))
+        return messages_list
 
     def send_messages(self, sheet: pd.DataFrame) -> pd.DataFrame:
         """
@@ -82,7 +102,7 @@ class Bot:
 
         for i, message in enumerate(sheet['Mensagem']):
             numero = sheet.loc[i, "Numero"]
-            messages = bot_message_parser(message)
+            messages = self.message_parser(message)
             link = f"https://web.whatsapp.com/send?phone={numero}"
 
             # Check for internet connection before attempting to send a message
@@ -99,22 +119,30 @@ class Bot:
                 print(f"Erro ao abrir o link do whatsapp para {numero}: {e}")
             
             try:
+                if i == 1:
+                    try:
+                        browser.get(link)
+                        wait_whatsapp_end_loading(browser)
+                    except Exception as e:
+                        status_list.append("Falha")  # Caso ocorra algum erro
+                        print(f"Erro ao abrir o link do whatsapp para {numero}: {e}")
                 for is_file, text in messages:
+                    print(f"\t\t\t{is_file}: {text}")
                     if is_file:
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, ATTACHMENTS_BUTTON))
                         ).click()
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, MEDIA_XPATH))
                         ).send_keys(text)
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, SEND_MEDIA_XPATH))
                         ).click()
                     else:
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, XPATH_SEND_MESSAGE_FIELD))
                         ).send_keys(text)
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, XPATH_SEND_MESSAGE_FIELD))
                         ).send_keys(Keys.ENTER)
                     time.sleep(MESSAGE_DT)  # Aguarda para assegurar o envio da mensagem
