@@ -25,8 +25,8 @@ MESSAGE_SEPARATOR = '[break]'
 FILE_SEPARATOR = '[file]'
 QUEUE_SEPARATOR = '[queue]'
 
-SENDER_EMAIL = 'andresafira2004@gmail.com'
-PASSWORD = 'zkde kdnb hcyd ixna'
+SENDER_EMAIL = None
+PASSWORD = None
 
 class Bot:
     def __init__(self):
