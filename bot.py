@@ -1,6 +1,9 @@
 from structures import *
 import pandas as pd
 import urllib.parse
+from email.message import EmailMessage
+import ssl
+import smtplib
 
 from selenium import webdriver # Abrir navegador
 from selenium.webdriver.common.keys import Keys # Enviar as mensagens
@@ -11,39 +14,60 @@ import time
 import urllib
 import socket
 
-MESSAGE_DT = 7
+MESSAGE_DT = 12
 XPATH_SEND_MESSAGE_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div/div/p'
 ADDITIONAL_TOOLS_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/div/div/div/span'
 ATTACHMENTS_BUTTON = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/button'
 MEDIA_XPATH = '//input[@accept="image/*,video/mp4,video/3gpp,video/quicktime"]'
+DOCS_XPATH  = '//input[@accept="*"]'
 SEND_MEDIA_XPATH = '//*[@id="app"]/div/div[3]/div[2]/div[2]/span/div/div/div/div[2]/div/div[2]/div[2]/div/div'
 MESSAGE_SEPARATOR = '[break]'
 FILE_SEPARATOR = '[file]'
+QUEUE_SEPARATOR = '[queue]'
 
-def bot_message_parser(message: str) -> list[tuple[bool, str]]:
-    message = message.split(FILE_SEPARATOR)
-    messages_list = []
-    for i in range(len(message)):
-        if i % 2 == 0:
-            chunk = message[i].split(MESSAGE_SEPARATOR)
-            for line in chunk:
-                messages_list.append((False, line))
-        else:
-            messages_list.append((True, message[i].replace(' ', '')))
-    return messages_list
-
+SENDER_EMAIL = 'andresafira2004@gmail.com'
+PASSWORD = 'zkde kdnb hcyd ixna'
 
 class Bot:
     def __init__(self):
-        pass
+        self.file_queue = []
+
+    def clear_queue(self):
+        self.file_queue = []
+
+    def add_to_queue(self, file_path: str):
+        self.file_queue.append(file_path)
 
     def is_connected(self) -> bool:
         """Checks if there is an active internet connection."""
         try:
             socket.create_connection(("8.8.8.8", 53), timeout=2)
             return True
-        except OSError:
+        except:
             return False
+    
+    def inner_message_parser(self, message: str) -> list[tuple[bool, str]]:
+        message = message.split(FILE_SEPARATOR)
+        messages_list = []
+        for i in range(len(message)):
+            if i % 2 == 0:
+                chunk = message[i].split(MESSAGE_SEPARATOR)
+                for line in chunk:
+                    messages_list.append((False, line))
+            else:
+                messages_list.append((True, message[i].replace(' ', '')))
+        return messages_list
+        
+
+    def message_parser(self, message: str) -> list[tuple[bool, str]]:
+        message = message.split(QUEUE_SEPARATOR)
+        messages_list = []
+
+        for i in range(len(message)):
+            messages_list += self.inner_message_parser(message[i])
+            if i < len(self.file_queue):
+                messages_list.append((True, self.file_queue[i]))
+        return messages_list
 
     def send_messages(self, sheet: pd.DataFrame) -> pd.DataFrame:
         """
@@ -82,7 +106,7 @@ class Bot:
 
         for i, message in enumerate(sheet['Mensagem']):
             numero = sheet.loc[i, "Numero"]
-            messages = bot_message_parser(message)
+            messages = self.message_parser(message)
             link = f"https://web.whatsapp.com/send?phone={numero}"
 
             # Check for internet connection before attempting to send a message
@@ -99,22 +123,30 @@ class Bot:
                 print(f"Erro ao abrir o link do whatsapp para {numero}: {e}")
             
             try:
+                if i == 1:
+                    try:
+                        browser.get(link)
+                        wait_whatsapp_end_loading(browser)
+                    except Exception as e:
+                        status_list.append("Falha")  # Caso ocorra algum erro
+                        print(f"Erro ao abrir o link do whatsapp para {numero}: {e}")
                 for is_file, text in messages:
+                    print(f"\t\t\t{is_file}: {text}")
                     if is_file:
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, ATTACHMENTS_BUTTON))
                         ).click()
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, MEDIA_XPATH))
                         ).send_keys(text)
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, SEND_MEDIA_XPATH))
                         ).click()
                     else:
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, XPATH_SEND_MESSAGE_FIELD))
                         ).send_keys(text)
-                        WebDriverWait(browser, MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, XPATH_SEND_MESSAGE_FIELD))
                         ).send_keys(Keys.ENTER)
                     time.sleep(MESSAGE_DT)  # Aguarda para assegurar o envio da mensagem
@@ -134,7 +166,41 @@ class Bot:
         sheet['Status'] = status_list
         return sheet
 
-    def generate_messages_from_template(self, sheet: pd.DataFrame, template: str) -> pd.DataFrame:
+    def send_emails(self, sheet: pd.DataFrame) -> pd.DataFrame:
+        # Initialize the browser (Chrome, in this example)
+        status_list = []  # List to store the status of each send attempt
+
+        context = ssl.create_default_context()
+
+        for i, message in enumerate(sheet['Mensagem']):
+            receiver = sheet.loc[i, "Email"]
+            
+            em = EmailMessage()
+            em['From'] = SENDER_EMAIL
+            em['To'] = receiver
+            em['Subject'] = 'CASD'
+            em.set_content(message)
+            # Check for internet connection before attempting to send a message
+            if not self.is_connected():
+                status_list.append("Falha: Internet não disponível")
+                print(f"Erro ao enviar mensagem para {receiver}: Internet não disponível")
+                continue
+
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as interface:
+                try:
+                    interface.login(SENDER_EMAIL, PASSWORD)
+                    interface.sendmail(SENDER_EMAIL, receiver, em.as_string())
+                    status_list.append("Sucesso")  # Se o envio foi bem-sucedido
+                except Exception as e:
+                    # Check if the message might have been sent despite an exception
+                    status_list.append(f"Falha: {str(e)}")
+                    print(f"Erro ao enviar mensagem para {receiver}: {e}")
+
+        # Add the 'Status' column to the DataFrame
+        sheet['Status'] = status_list
+        return sheet
+
+    def generate_messages_from_template(self, sheet: pd.DataFrame, template: str, whatsapp_flag: bool) -> pd.DataFrame:
         """
         Gera mensagens personalizadas com base em um template e nos atributos de um DataFrame.
 
@@ -144,6 +210,9 @@ class Bot:
             template (str): Um texto modelo contendo placeholders (marcadores) que serão substituídos
                             pelos valores das colunas do DataFrame. Os placeholders devem corresponder
                             aos nomes das colunas em `sheet`, por exemplo, "{Nome}".
+            whatsapp_flag (bool): Uma flaq que determina o meio de envio da mensagem, sendo:
+                            0: WhatsApp
+                            1: e-mail
 
         Retorna:
             pd.DataFrame: Um DataFrame do Pandas contendo as colunas "Nome", "Numero" e "Mensagem",
@@ -177,12 +246,17 @@ class Bot:
                 mensagens.append("Erro ao gerar mensagem para esta linha.")
 
         # Verifica se as colunas necessárias estão presentes no DataFrame de saída
-        if "Nome" not in sheet.columns or "Numero" not in sheet.columns:
-            raise ValueError("O DataFrame deve conter colunas 'Nome' e 'Numero'.")
+        if whatsapp_flag:
+            required_field = "Numero"
+        else:
+            required_field = "Email"
+
+        if "Nome" not in sheet.columns or required_field not in sheet.columns:
+            raise ValueError(f"O DataFrame deve conter colunas 'Nome' e '{required_field}'.")
 
         # Retorna um DataFrame com as mensagens geradas
         return pd.DataFrame({
             "Nome": sheet["Nome"],
-            "Numero": sheet["Numero"],
+            required_field: sheet[required_field],
             "Mensagem": mensagens
         })

@@ -60,11 +60,11 @@ class MessageWindow:
         self.bottom_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
         # Load File button
-        self.load_button = ctk.CTkButton(self.top_frame, text="Load Excel File", command=self.load_file)
+        self.load_button = ctk.CTkButton(self.top_frame, text="Carregar Excel", command=self.load_file)
         self.load_button.pack(pady=5)
 
         # Send Messages button
-        self.send_button = ctk.CTkButton(self.top_frame, text="Send Messages", command=self.send_messages)
+        self.send_button = ctk.CTkButton(self.top_frame, text="Enviar Mensagens", command=self.send_messages)
         self.send_button.pack(pady=5)
 
         # Treeview widget for displaying the DataFrame
@@ -106,7 +106,7 @@ class MessageWindow:
                 self.sheet = pd.read_excel(file_path)
                 self.display_dataframe()
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to load file: {e}")
+                messagebox.showerror("Error", f"Falha ao carregar arquivo: {e}")
 
     def send_messages(self):
         pass
@@ -161,7 +161,7 @@ class LoginWindow(BaseWindow):
         self.username_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
         self.username_frame.pack(pady=10, fill="x")
 
-        self.username_label = ctk.CTkLabel(self.username_frame, text="Username")
+        self.username_label = ctk.CTkLabel(self.username_frame, text="Usuário")
         self.username_label.pack(pady=(0, 5))
         self.username_entry = ctk.CTkEntry(self.username_frame)
         self.username_entry.pack()
@@ -170,7 +170,7 @@ class LoginWindow(BaseWindow):
         self.password_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
         self.password_frame.pack(pady=10, fill="x")
 
-        self.password_label = ctk.CTkLabel(self.password_frame, text="Password")
+        self.password_label = ctk.CTkLabel(self.password_frame, text="Senha")
         self.password_label.pack(pady=(0, 5))
         self.password_entry = ctk.CTkEntry(self.password_frame, show='*')
         self.password_entry.pack()
@@ -210,11 +210,17 @@ class SelectionWindow(BaseWindow):
         self.welcome_label.pack(pady=20)
 
         # Send messages button
-        self.send_message_button = ctk.CTkButton(self.center_frame, text="Enviar mensagens por planilha.", command=self.open_send_message_window)
+        self.send_message_button = ctk.CTkButton(self.center_frame, text="Enviar mensagens por planilha", command=self.open_send_message_window)
         self.send_message_button.pack(pady=10)
 
-        self.send_message_button = ctk.CTkButton(self.center_frame, text="Enviar mensagens por template.", command=self.open_send_message_template_window)
+        self.send_message_button = ctk.CTkButton(self.center_frame, text="Enviar mensagens por template", command=self.open_send_message_template_window)
         self.send_message_button.pack(pady=10)
+
+        self.send_email_button = ctk.CTkButton(self.center_frame, text="Enviar e-mails por planilha", command=self.open_send_email_window)
+        self.send_email_button.pack(pady=10)
+        
+        self.send_email_button = ctk.CTkButton(self.center_frame, text="Enviar e-mails por template", command=self.open_send_email_template_window)
+        self.send_email_button.pack(pady=10)
 
     def open_send_message_window(self):
         # Create the main application window
@@ -226,12 +232,27 @@ class SelectionWindow(BaseWindow):
 
     def open_send_message_template_window(self):
         # Create the main application window
+        send_message_window = ctk.CTk()
+        bot = Bot()
+        app = SendMessageTemplateWindow(send_message_window, bot)
+        self.master.destroy()
+        send_message_window.mainloop()
+
+    def open_send_email_window(self):
+        # Create the main application window
         send_email_window = ctk.CTk()
         bot = Bot()
-        app = SendMessageTemplateWindow(send_email_window, bot)
+        app = SendEmailWindow(send_email_window, bot)
         self.master.destroy()
         send_email_window.mainloop()
 
+    def open_send_email_template_window(self):
+        # Create the main application window
+        send_email_window = ctk.CTk()
+        bot = Bot()
+        app = SendEmailTemplateWindow(send_email_window, bot)
+        self.master.destroy()
+        send_email_window.mainloop()
 
 class SendMessageWindow(MessageWindow):
     def __init__(self, root: ctk.CTk, bot: Bot):
@@ -243,22 +264,38 @@ class SendMessageWindow(MessageWindow):
             try:
                 self.report = self.bot.send_messages(self.sheet)
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to send messages: {e}")
+                messagebox.showerror("Error", f"Falha ao enviar mensagens: {e}")
 
             self.open_review_window()
         else:
-            messagebox.showwarning("Warning", "Please load a file first.")
+            messagebox.showwarning("Warning", "Carregue o arquivo Excel primeiro")
 
 
 class SendMessageTemplateWindow(MessageWindow):
     def __init__(self, root: ctk.CTk, bot: Bot):
         super().__init__(root, bot)
+        self.bot.clear_queue()
         # Template Text input
         template_label = ctk.CTkLabel(self.top_frame, text="Enter Template Text:")
         template_label.pack(pady=(10, 0))
 
         self.template_text = ctk.CTkTextbox(self.top_frame, height=100, width=800)
         self.template_text.pack(pady=(5, 15), padx=20)
+        
+        self.add_file_button = ctk.CTkButton(self.top_frame, text="Adicionar Arquivo", command=self.load_files)
+        self.add_file_button.pack(pady=10)
+    
+    def load_files(self):
+        '''Open a file dialog to select the file to be sent.'''
+        file_path = filedialog.askopenfilename(
+            title="Select File", filetypes=(("Image Files", "*.png"), ("All files", "*.*"))
+        )
+
+        if file_path:
+            try:
+                self.bot.add_to_queue(file_path)
+            except Exception as e:
+                messagebox.showerror("Error", f"Falha ao carregar arquivo: {e}")
 
     def send_messages(self):
         '''Ensure a file is loaded before sending messages'''
@@ -267,15 +304,60 @@ class SendMessageTemplateWindow(MessageWindow):
                 # Update template_content
                 self.template_content = self.template_text.get("1.0", "end-1c")
 
-                sheet_with_messages = self.bot.generate_messages_from_template(self.sheet, self.template_content)
+                sheet_with_messages = self.bot.generate_messages_from_template(self.sheet, self.template_content, whatsapp_flag=True)
 
                 self.report = self.bot.send_messages(sheet_with_messages)
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to send messages: {e}")
+                messagebox.showerror("Error", f"Falha ao enviar as mensagens: {e}")
 
             self.open_review_window()
         else:
-            messagebox.showwarning("Warning", "Please load a file first.")
+            messagebox.showwarning("Warning", "Por favor carregar o Excel primeiro")
+
+
+class SendEmailWindow(MessageWindow):
+    def __init__(self, root: ctk.CTk, bot: Bot):
+        super().__init__(root, bot)
+
+    def send_messages(self):
+        '''Ensure a file is loaded before sending emails'''
+        if self.sheet is not None:
+            try:
+                self.report = self.bot.send_emails(self.sheet)
+            except Exception as e:
+                messagebox.showerror("Error", f"Falha ao enviar os emails: {e}")
+
+            self.open_review_window()
+        else:
+            messagebox.showwarning("Warning", "Carregar o arquivo Excel primeiro")
+
+
+class SendEmailTemplateWindow(MessageWindow):
+    def __init__(self, root: ctk.CTk, bot: Bot):
+        super().__init__(root, bot)
+        # Template Text input
+        template_label = ctk.CTkLabel(self.top_frame, text="Insira o Texto Template:")
+        template_label.pack(pady=(10, 0))
+
+        self.template_text = ctk.CTkTextbox(self.top_frame, height=100, width=800)
+        self.template_text.pack(pady=(5, 15), padx=20)
+    
+    def send_messages(self):
+        '''Ensure a file is loaded before sending emails'''
+        if self.sheet is not None:
+            try:
+                # Update template_content
+                self.template_content = self.template_text.get("1.0", "end-1c")
+
+                sheet_with_messages = self.bot.generate_messages_from_template(self.sheet, self.template_content, whatsapp_flag=False)
+
+                self.report = self.bot.send_emails(sheet_with_messages)
+            except Exception as e:
+                messagebox.showerror("Error", f"Falha ao enviar as mensagens: {e}")
+
+            self.open_review_window()
+        else:
+            messagebox.showwarning("Warning", "Carregar o arquivo Excel primeiro")
 
 
 class ReviewWindow(BaseWindow):
@@ -283,7 +365,7 @@ class ReviewWindow(BaseWindow):
         super().__init__(master, title="CASDbot", report=report)
         # "Back" button in the top-left corner
         self.back_button = ctk.CTkButton(
-            master, text="← Back", command=self.go_back, corner_radius=8
+            master, text="← Voltar", command=self.go_back, corner_radius=8
         )
         self.back_button.place(x=0, y=0)
 
@@ -297,7 +379,7 @@ class ReviewWindow(BaseWindow):
         self.scrollbar.pack(side="right", fill="y")
 
         # Download Report button
-        self.download_button = ctk.CTkButton(master, text="Download Report", command=self.download_report)
+        self.download_button = ctk.CTkButton(master, text="Baixar Relatório", command=self.download_report)
         self.download_button.pack(pady=10)
 
         self.display_dataframe()
@@ -318,7 +400,7 @@ class ReviewWindow(BaseWindow):
             for _, row in self.report.iterrows():
                 self.df_display.insert("", "end", values=list(row))
         else:
-            messagebox.showinfo("Info", "No data loaded to display.")
+            messagebox.showinfo("Info", "Nenhum dado carregado para apresentar")
 
     def download_report(self):
         # Check if the report is loaded
@@ -332,11 +414,11 @@ class ReviewWindow(BaseWindow):
             if file_path:
                 try:
                     self.report.to_excel(file_path, index=False)
-                    messagebox.showinfo("Success", "Report downloaded successfully.")
+                    messagebox.showinfo("Success", "Relatório baixado com sucesso")
                 except Exception as e:
-                    messagebox.showerror("Error", f"Failed to save report: {e}")
+                    messagebox.showerror("Error", f"Falha ao salvar relatório: {e}")
         else:
-            messagebox.showwarning("Warning", "No report data to save.")
+            messagebox.showwarning("Warning", "Nenhum dado de relatório para mostrar")
 
     def go_back(self):
         # Closes current window and returns to the SelectionWindow
