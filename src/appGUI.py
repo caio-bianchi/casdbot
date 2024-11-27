@@ -149,7 +149,7 @@ class MessageWindow:
 
 class WelcomeWindow(BaseWindow):
     def __init__(self, master):
-        super().__init__(master, title="CASDbot - Welcome")
+        super().__init__(master, title="CASDbot")
         self.master.attributes("-fullscreen", False)  # Start in windowed mode
 
         # Load the original image
@@ -403,6 +403,39 @@ class SendMessageTemplateWindow(MessageWindow):
         self.add_file_button = ctk.CTkButton(self.top_frame, text="Adicionar Arquivo", command=self.load_files, **button_style)
         self.add_file_button.pack(pady=10)
 
+        # Bottom frame for Treeview display
+        self.other_frame = ctk.CTkFrame(root, fg_color=bg_color)
+        self.other_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        # Treeview widget for displaying the DataFrame
+        self.files_display = ttk.Treeview(self.other_frame, show="headings")
+        self.files_display.pack(side="left", fill="both", expand=True)
+
+        # Add vertical scrollbar to Treeview
+        self.scrollbar2 = ttk.Scrollbar(self.other_frame, orient="vertical", command=self.df_display.yview)
+        self.files_display.configure(yscroll=self.scrollbar2.set)
+        self.scrollbar2.pack(side="right", fill="y")
+    
+    def display_files(self):
+        # Clear any existing content in the Treeview
+        self.files_display.delete(*self.files_display.get_children())
+
+        # Set up columns if DataFrame is loaded
+        files_sheet = pd.DataFrame(self.bot.file_queue, columns=["Arquivos"])
+
+        if files_sheet is not None:
+            # Configure columns and headings in Treeview
+            self.files_display["column"] = list(files_sheet.columns)
+            for col in files_sheet.columns:
+                self.files_display.heading(col, text=col)
+                self.files_display.column(col, anchor="center", width=100)
+
+            # Insert each row of the DataFrame into the Treeview
+            for _, row in files_sheet.iterrows():
+                self.files_display.insert("", "end", values=list(row))
+        else:
+            messagebox.showinfo("Info", "No data loaded to display.")
+
     def load_files(self):
         '''Open a file dialog to select the file to be sent.'''
         file_path = filedialog.askopenfilename(
@@ -412,6 +445,7 @@ class SendMessageTemplateWindow(MessageWindow):
         if file_path:
             try:
                 self.bot.add_to_queue(file_path)
+                self.display_files()
             except Exception as e:
                 messagebox.showerror("Error", f"Falha ao carregar arquivo: {e}")
 
@@ -541,8 +575,53 @@ class SendEmailTemplateWindow(MessageWindow):
         self.template_text = ctk.CTkTextbox(self.top_frame, height=100, width=800)
         self.template_text.pack(pady=(5, 15), padx=20)
         
-        self.add_file_button = ctk.CTkButton(self.top_frame, text="Adicionar Arquivo", command=self.load_files)
+        button_style = {
+            "corner_radius": 32,  # Rounded corners
+            "fg_color": button_color,  # Button background color
+            "height": 30,  # Button height
+            "font": ("Montserrat", 16, "bold"),  # Font style
+            "text_color": "white",  # Text color
+            "border_width": 2,  # Border width
+            "border_color": border_color,  # Border color
+            "hover_color": hover_color  # Hover color
+        }
+        
+        self.add_file_button = ctk.CTkButton(self.top_frame, text="Adicionar Arquivo", command=self.load_files, **button_style)
         self.add_file_button.pack(pady=10)
+        
+        # Bottom frame for Treeview display
+        self.other_frame = ctk.CTkFrame(root, fg_color=bg_color)
+        self.other_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        # Treeview widget for displaying the DataFrame
+        self.files_display = ttk.Treeview(self.other_frame, show="headings")
+        self.files_display.pack(side="left", fill="both", expand=True)
+
+        # Add vertical scrollbar to Treeview
+        self.scrollbar2 = ttk.Scrollbar(self.other_frame, orient="vertical", command=self.df_display.yview)
+        self.files_display.configure(yscroll=self.scrollbar2.set)
+        self.scrollbar2.pack(side="right", fill="y")
+    
+    def display_files(self):
+        # Clear any existing content in the Treeview
+        self.files_display.delete(*self.files_display.get_children())
+
+        # Set up columns if DataFrame is loaded
+        files_sheet = pd.DataFrame(self.bot.file_queue, columns=["Arquivos"])
+
+        if files_sheet is not None:
+            # Configure columns and headings in Treeview
+            self.files_display["column"] = list(files_sheet.columns)
+            for col in files_sheet.columns:
+                self.files_display.heading(col, text=col)
+                self.files_display.column(col, anchor="center", width=100)
+
+            # Insert each row of the DataFrame into the Treeview
+            for _, row in files_sheet.iterrows():
+                self.files_display.insert("", "end", values=list(row))
+        else:
+            messagebox.showinfo("Info", "No data loaded to display.")
+
     
     def load_files(self):
         '''Open a file dialog to select the file to be sent.'''
@@ -553,6 +632,7 @@ class SendEmailTemplateWindow(MessageWindow):
         if file_path:
             try:
                 self.bot.add_to_queue(file_path)
+                self.display_files()
             except Exception as e:
                 messagebox.showerror("Error", f"Falha ao carregar arquivo: {e}")
       
