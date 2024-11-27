@@ -49,6 +49,7 @@ class MessageWindow:
         self.root.title("CASDbot")
         self.root.geometry(WINDOWS_SIZE)
         self.root.configure(fg_color=bg_color)
+        self.root.wm_iconbitmap(ICON)
 
         # Button common style
         button_style = {
@@ -177,9 +178,43 @@ class WelcomeWindow(BaseWindow):
             self.master,
             text="Começar a mandar mensagens!", command=self.open_main_window, **button_style)
         self.proceed_button.place(relx=0.5, rely=0.6, anchor="center")
+        
+        self.help_button = ctk.CTkButton(self.master, text="Ajuda", **button_style, command=self.show_help_popup)
+        self.help_button.place(relx=0.5, rely=0.75, anchor="center")  # Adjust position for the help button
 
         # Bind the resize event to adjust the image size dynamically
         self.master.bind("<Configure>", self.resize_background)
+    
+    def show_help_popup(self):
+        # Create a popup window for the help section
+        help_popup = ctk.CTkToplevel(self.master)
+        help_popup.title("Ajuda")
+
+        # Set the icon for the popup window
+        help_popup.iconbitmap(ICON)
+
+        # Bring the popup to the front
+        help_popup.attributes('-topmost', 1)  # This ensures that the popup is always on top
+
+        # Set up the content of the popup
+        help_text = """
+        Bem-vindo ao CASDbot! Aqui está como você pode usar o sistema:
+
+        1. Selecione envio por Whatsapp ou por e-mail.
+        2. Envie as mensagens/e-mail por planilha ou criar um template.
+        3. No caso de enviar por template, você pode usar {Header da Coluna} para escrever a célula da coluna
+        4. No caso de criar template, é possível selecionar imagens para envio.
+        5. Para inserir uma imagem basta escrever o caminho da imagem entre dois elementos '[file]'.
+        6. Outra forma, é de utilizar o botão de buscar imagem e selecionar o arquivo e, após isso, utilizar um elemento '[queue]' para selecionar onde na mensagem aparecerá a imagem
+        7. Acompanhe o progresso e baixe os relatórios ao final.
+        """
+
+        help_label = ctk.CTkLabel(help_popup, text=help_text, justify="left", font=("Montserrat", 14))
+        help_label.pack(padx=20, pady=20)
+
+        # Add a "Close" button to close the help popup
+        close_button = ctk.CTkButton(help_popup, text="Fechar", command=help_popup.destroy)
+        close_button.pack(pady=(0, 10))
 
     def resize_background(self, event):
         """Resize the background image to fit the window."""
@@ -249,9 +284,43 @@ class SelectionWindow(BaseWindow):
         self.send_email_template_button = ctk.CTkButton(self.master, text="Enviar e-mails por template",
                                                         command=self.open_send_email_template_window, **button_style)
         self.send_email_template_button.place(relx=0.5, rely=0.7, anchor="center")
+        
+        self.help_button = ctk.CTkButton(self.master, text="Ajuda", **button_style, command=self.show_help_popup)
+        self.help_button.place(relx=0.5, rely=0.8, anchor="center")  # Adjust position for the help button
 
         # Bind the resize event to adjust the background image size dynamically
         self.master.bind("<Configure>", self.resize_background)
+    
+    def show_help_popup(self):
+        # Create a popup window for the help section
+        help_popup = ctk.CTkToplevel(self.master)
+        help_popup.title("Ajuda")
+
+        # Set the icon for the popup window
+        help_popup.iconbitmap(ICON)
+
+        # Bring the popup to the front
+        help_popup.attributes('-topmost', 1)  # This ensures that the popup is always on top
+
+        # Set up the content of the popup
+        help_text = """
+                Bem-vindo ao CASDbot! Aqui está como você pode usar o sistema:
+
+                1. Selecione envio por Whatsapp ou por e-mail.
+                2. Envie as mensagens/e-mail por planilha ou criar um template.
+                3. No caso de enviar por template, você pode usar {Header da Coluna} para escrever a célula da coluna
+                4. No caso de criar template, é possível selecionar imagens para envio.
+                5. Para inserir uma imagem basta escrever o caminho da imagem entre dois elementos '[file]'.
+                6. Outra forma, é de utilizar o botão de buscar imagem e selecionar o arquivo e, após isso, utilizar um elemento '[queue]' para selecionar onde na mensagem aparecerá a imagem
+                7. Acompanhe o progresso e baixe os relatórios ao final.
+                """
+
+        help_label = ctk.CTkLabel(help_popup, text=help_text, justify="left", font=("Montserrat", 14))
+        help_label.pack(padx=20, pady=20)
+
+        # Add a "Close" button to close the help popup
+        close_button = ctk.CTkButton(help_popup, text="Fechar", command=help_popup.destroy)
+        close_button.pack(pady=(0, 10))
 
     def resize_background(self, event):
         """Resize the background image to fit the window."""
@@ -292,8 +361,8 @@ class SelectionWindow(BaseWindow):
         send_email_window.mainloop()
 
 class SendMessageWindow(MessageWindow):
-    def __init__(self, root: ctk.CTk, bot: Bot, sheet = None):
-        super().__init__(root, bot, sheet)
+    def __init__(self, root: ctk.CTk, bot: Bot):
+        super().__init__(root, bot)
 
     def send_messages(self):
         '''Ensure a file is loaded before sending messages'''
@@ -371,12 +440,29 @@ class EmailLoginWindow(BaseWindow):
         self.password: str
 
         self.master.bind("<Return>", lambda event: self.login())
+        
+        button_style = {
+            "corner_radius": 32,  # Rounded corners
+            "fg_color": button_color,  # Button background color
+            "height": 30,  # Button height
+            "font": ("Montserrat", 16, "bold"),  # Font style
+            "text_color": "white",  # Text color
+            "border_width": 2,  # Border width
+            "border_color": border_color,  # Border color
+            "hover_color": hover_color  # Hover color
+        }
+
+        # Back button in the top-left corner
+        self.back_button = ctk.CTkButton(
+            master, text="← Voltar", command=self.go_back, **button_style
+        )
+        self.back_button.place(x=10, y=10)
 
         # Username Label and Entry
         self.username_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
         self.username_frame.pack(pady=10, fill="x")
 
-        self.username_label = ctk.CTkLabel(self.username_frame, text="Email de envio")
+        self.username_label = ctk.CTkLabel(self.username_frame, text="Email de envio", font=("Montserrat", 14), text_color="black")
         self.username_label.pack(pady=(0, 5))
         self.username_entry = ctk.CTkEntry(self.username_frame)
         self.username_entry.pack()
@@ -385,13 +471,13 @@ class EmailLoginWindow(BaseWindow):
         self.password_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
         self.password_frame.pack(pady=10, fill="x")
 
-        self.password_label = ctk.CTkLabel(self.password_frame, text="Senha de 16 caracteres")
+        self.password_label = ctk.CTkLabel(self.password_frame, text="Senha de 16 caracteres", font=("Montserrat", 14), text_color="black")
         self.password_label.pack(pady=(0, 5))
         self.password_entry = ctk.CTkEntry(self.password_frame, show='*')
         self.password_entry.pack()
 
         # Login Button
-        self.login_button = ctk.CTkButton(self.center_frame, text="Login", corner_radius=32, command=self.login)
+        self.login_button = ctk.CTkButton(self.center_frame, text="Login", command=self.login, **button_style)
         self.login_button.pack(pady=20)
 
     def login(self):
@@ -416,6 +502,14 @@ class EmailLoginWindow(BaseWindow):
             app = SendEmailTemplateWindow(main_window, bot)
         else:
             app = SendEmailWindow(main_window, bot)
+        main_window.mainloop()
+    
+    def go_back(self):
+        # Closes current window and returns to the SelectionWindow
+        self.close_window()
+        main_window = ctk.CTk()
+        bot = Bot()
+        SelectionWindow(main_window, bot)
         main_window.mainloop()
 
 
