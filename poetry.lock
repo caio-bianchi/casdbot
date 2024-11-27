@@ -411,6 +411,17 @@ dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
+name = "py-cpuinfo"
+version = "9.0.0"
+description = "Get CPU info with pure Python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "py-cpuinfo-9.0.0.tar.gz", hash = "sha256:3cdbbf3fac90dc6f118bfd64384f309edeadd902d7c8fb17f02ffa1fc3f49690"},
+    {file = "py_cpuinfo-9.0.0-py3-none-any.whl", hash = "sha256:859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5"},
+]
+
+[[package]]
 name = "pycparser"
 version = "2.22"
 description = "C parser in Python"
@@ -454,6 +465,41 @@ pluggy = ">=1.5,<2"
 dev = ["argcomplete", "attrs (>=19.2)", "hypothesis (>=3.56)", "mock", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
 
 [[package]]
+name = "pytest-benchmark"
+version = "5.1.0"
+description = "A ``pytest`` fixture for benchmarking code. It will group the tests into rounds that are calibrated to the chosen timer."
+optional = false
+python-versions = ">=3.9"
+files = [
+    {file = "pytest-benchmark-5.1.0.tar.gz", hash = "sha256:9ea661cdc292e8231f7cd4c10b0319e56a2118e2c09d9f50e1b3d150d2aca105"},
+    {file = "pytest_benchmark-5.1.0-py3-none-any.whl", hash = "sha256:922de2dfa3033c227c96da942d1878191afa135a29485fb942e85dff1c592c89"},
+]
+
+[package.dependencies]
+py-cpuinfo = "*"
+pytest = ">=8.1"
+
+[package.extras]
+aspect = ["aspectlib"]
+elasticsearch = ["elasticsearch"]
+histogram = ["pygal", "pygaljs", "setuptools"]
+
+[[package]]
+name = "pytest-dotenv"
+version = "0.5.2"
+description = "A py.test plugin that parses environment files before running tests"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pytest-dotenv-0.5.2.tar.gz", hash = "sha256:2dc6c3ac6d8764c71c6d2804e902d0ff810fa19692e95fe138aefc9b1aa73732"},
+    {file = "pytest_dotenv-0.5.2-py3-none-any.whl", hash = "sha256:40a2cece120a213898afaa5407673f6bd924b1fa7eafce6bda0e8abffe2f710f"},
+]
+
+[package.dependencies]
+pytest = ">=5.0.0"
+python-dotenv = ">=0.9.1"
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
@@ -466,6 +512,20 @@ files = [
 
 [package.dependencies]
 six = ">=1.5"
+
+[[package]]
+name = "python-dotenv"
+version = "1.0.1"
+description = "Read key-value pairs from a .env file and set them as environment variables"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca"},
+    {file = "python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a"},
+]
+
+[package.extras]
+cli = ["click (>=5.0)"]
 
 [[package]]
 name = "pytz"
@@ -639,4 +699,4 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "8e09931d5e495da86f1394dedb7a900089a5d5470e27b6e14c7ffd465ff17929"
+content-hash = "1dbfc8c20e4219f4d60941503362fb76e0a3c6db5f2c9da1e75ce8605bb6aadc"

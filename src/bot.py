@@ -1,20 +1,15 @@
-from structures import *
-import pandas as pd
-import urllib.parse
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
-import ssl
 import smtplib
-
-from selenium import webdriver # Abrir navegador
-from selenium.webdriver.common.keys import Keys # Enviar as mensagens
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
-import urllib
 import socket
+import ssl
+import time
+from email.message import EmailMessage
+
+import pandas as pd
+from selenium import webdriver  # Abrir navegador
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys  # Enviar as mensagens
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
 MESSAGE_DT = 12
 XPATH_SEND_MESSAGE_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div/div/p'
@@ -27,11 +22,11 @@ MESSAGE_SEPARATOR = '[break]'
 FILE_SEPARATOR = '[file]'
 QUEUE_SEPARATOR = '[queue]'
 
+SENDER_EMAIL = None
+PASSWORD = None
 
 class Bot:
     def __init__(self):
-        self.sender_email: str
-        self.email_password: str
         self.file_queue = []
 
     def clear_queue(self):
@@ -48,7 +43,7 @@ class Bot:
         except:
             return False
     
-    def inner_message_parser(self, message: str) -> list[tuple[bool, str]]:
+    def __inner_message_parser(self, message: str) -> list[tuple[bool, str]]:
         message = message.split(FILE_SEPARATOR)
         messages_list = []
         for i in range(len(message)):
@@ -66,7 +61,7 @@ class Bot:
         messages_list = []
 
         for i in range(len(message)):
-            messages_list += self.inner_message_parser(message[i])
+            messages_list += self.__inner_message_parser(message[i])
             if i < len(self.file_queue):
                 messages_list.append((True, self.file_queue[i]))
         return messages_list
@@ -176,28 +171,21 @@ class Bot:
 
         for i, message in enumerate(sheet['Mensagem']):
             receiver = sheet.loc[i, "Email"]
-            
-            em = MIMEMultipart()
-            em['From'] = self.sender_email
+            em = EmailMessage()
+            em['From'] = SENDER_EMAIL
             em['To'] = receiver
             em['Subject'] = 'CASD'
-            em.attach(MIMEText(message))
-
+            em.set_content(message)
             # Check for internet connection before attempting to send a message
             if not self.is_connected():
                 status_list.append("Falha: Internet não disponível")
                 print(f"Erro ao enviar mensagem para {receiver}: Internet não disponível")
                 continue
-            
-            for file_path in self.file_queue:
-                with open(file_path, 'rb') as file:
-                    name = file_path.split('/')[-1]
-                    em.attach(MIMEApplication(file.read(), Name = name))
 
             with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as interface:
                 try:
-                    interface.login(self.sender_email, self.email_password)
-                    interface.sendmail(self.sender_email, receiver, em.as_string())
+                    interface.login(SENDER_EMAIL, PASSWORD)
+                    interface.sendmail(SENDER_EMAIL, receiver, em.as_string())
                     status_list.append("Sucesso")  # Se o envio foi bem-sucedido
                 except Exception as e:
                     # Check if the message might have been sent despite an exception
