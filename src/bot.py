@@ -168,7 +168,6 @@ class Bot:
 
         # Add the 'Status' column to the DataFrame
         sheet['Status'] = status_list
-        print(sheet)
         return sheet
 
     def send_emails(self, sheet: pd.DataFrame) -> pd.DataFrame:
