@@ -1,7 +1,9 @@
 from structures import *
 import pandas as pd
 import urllib.parse
-from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 import ssl
 import smtplib
 
@@ -25,8 +27,8 @@ MESSAGE_SEPARATOR = '[break]'
 FILE_SEPARATOR = '[file]'
 QUEUE_SEPARATOR = '[queue]'
 
-SENDER_EMAIL = 'andresafira2004@gmail.com'
-PASSWORD = 'zkde kdnb hcyd ixna'
+SENDER_EMAIL = None
+PASSWORD = None
 
 class Bot:
     def __init__(self):
@@ -175,16 +177,22 @@ class Bot:
         for i, message in enumerate(sheet['Mensagem']):
             receiver = sheet.loc[i, "Email"]
             
-            em = EmailMessage()
+            em = MIMEMultipart()
             em['From'] = SENDER_EMAIL
             em['To'] = receiver
             em['Subject'] = 'CASD'
-            em.set_content(message)
+            em.attach(MIMEText(message))
+
             # Check for internet connection before attempting to send a message
             if not self.is_connected():
                 status_list.append("Falha: Internet não disponível")
                 print(f"Erro ao enviar mensagem para {receiver}: Internet não disponível")
                 continue
+            
+            for file_path in self.file_queue:
+                with open(file_path, 'rb') as file:
+                    name = file_path.split('/')[-1]
+                    em.attach(MIMEApplication(file.read(), Name = name))
 
             with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as interface:
                 try:
