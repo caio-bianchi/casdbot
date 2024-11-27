@@ -178,8 +178,42 @@ class WelcomeWindow(BaseWindow):
             text="Começar a mandar mensagens!", command=self.open_main_window, **button_style)
         self.proceed_button.place(relx=0.5, rely=0.6, anchor="center")
 
+        self.help_button = ctk.CTkButton(self.master, text="Ajuda", **button_style, command=self.show_help_popup)
+        self.help_button.place(relx=0.5, rely=0.75, anchor="center")  # Adjust position for the help button
+
         # Bind the resize event to adjust the image size dynamically
         self.master.bind("<Configure>", self.resize_background)
+
+    def show_help_popup(self):
+        # Create a popup window for the help section
+        help_popup = ctk.CTkToplevel(self.master)
+        help_popup.title("Ajuda")
+
+        # Set the icon for the popup window
+        help_popup.iconbitmap(ICON)
+
+        # Bring the popup to the front
+        help_popup.attributes('-topmost', 1)  # This ensures that the popup is always on top
+
+        # Set up the content of the popup
+        help_text = """
+        Bem-vindo ao CASDbot! Aqui está como você pode usar o sistema:
+
+        1. Selecione envio por Whatsapp ou por e-mail.
+        2. Envie as mensagens/e-mail por planilha ou criar um template.
+        3. No caso de enviar por template, você pode usar {Header da Coluna} para escrever a célula da coluna
+        4. No caso de criar template, é possível selecionar imagens para envio.
+        5. Para inserir uma imagem basta escrever o caminho da imagem entre dois elementos '[file]'.
+        6. Outra forma, é de utilizar o botão de buscar imagem e selecionar o arquivo e, após isso, utilizar um elemento '[queue]' para selecionar onde na mensagem aparecerá a imagem
+        7. Acompanhe o progresso e baixe os relatórios ao final.
+        """
+
+        help_label = ctk.CTkLabel(help_popup, text=help_text, justify="left", font=("Montserrat", 14))
+        help_label.pack(padx=20, pady=20)
+
+        # Add a "Close" button to close the help popup
+        close_button = ctk.CTkButton(help_popup, text="Fechar", command=help_popup.destroy)
+        close_button.pack(pady=(0, 10))
 
     def resize_background(self, event):
         """Resize the background image to fit the window."""
@@ -250,8 +284,42 @@ class SelectionWindow(BaseWindow):
                                                         command=self.open_send_email_template_window, **button_style)
         self.send_email_template_button.place(relx=0.5, rely=0.7, anchor="center")
 
-        # Bind the resize event to adjust the background image size dynamically
+        self.help_button = ctk.CTkButton(self.master, text="Ajuda", **button_style, command=self.show_help_popup)
+        self.help_button.place(relx=0.5, rely=0.8, anchor="center")  # Adjust position for the help button
+
+        # Bind the resize event to adjust the image size dynamically
         self.master.bind("<Configure>", self.resize_background)
+
+    def show_help_popup(self):
+        # Create a popup window for the help section
+        help_popup = ctk.CTkToplevel(self.master)
+        help_popup.title("Ajuda")
+
+        # Set the icon for the popup window
+        help_popup.iconbitmap(ICON)
+
+        # Bring the popup to the front
+        help_popup.attributes('-topmost', 1)  # This ensures that the popup is always on top
+
+        # Set up the content of the popup
+        help_text = """
+                Bem-vindo ao CASDbot! Aqui está como você pode usar o sistema:
+
+                1. Selecione envio por Whatsapp ou por e-mail.
+                2. Envie as mensagens/e-mail por planilha ou criar um template.
+                3. No caso de enviar por template, você pode usar {Header da Coluna} para escrever a célula da coluna
+                4. No caso de criar template, é possível selecionar imagens para envio.
+                5. Para inserir uma imagem basta escrever o caminho da imagem entre dois elementos '[file]'.
+                6. Outra forma, é de utilizar o botão de buscar imagem e selecionar o arquivo e, após isso, utilizar um elemento '[queue]' para selecionar onde na mensagem aparecerá a imagem
+                7. Acompanhe o progresso e baixe os relatórios ao final.
+                """
+
+        help_label = ctk.CTkLabel(help_popup, text=help_text, justify="left", font=("Montserrat", 14))
+        help_label.pack(padx=20, pady=20)
+
+        # Add a "Close" button to close the help popup
+        close_button = ctk.CTkButton(help_popup, text="Fechar", command=help_popup.destroy)
+        close_button.pack(pady=(0, 10))
 
     def resize_background(self, event):
         """Resize the background image to fit the window."""
@@ -390,8 +458,19 @@ class EmailLoginWindow(BaseWindow):
         self.password_entry = ctk.CTkEntry(self.password_frame, show='*')
         self.password_entry.pack()
 
+        button_style = {
+            "corner_radius": 32,  # Slightly rounded corners for a smoother look
+            "fg_color": button_color,  # Background color
+            "height": 30,  # Height of the button
+            "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
+            "text_color": "white",  # Text color
+            "border_width": 2,  # Border width to create the raised effect
+            "border_color": border_color,  # Border color (this should match the background or complement it)
+            "hover_color": hover_color
+        }
+
         # Login Button
-        self.login_button = ctk.CTkButton(self.center_frame, text="Login", corner_radius=32, command=self.login)
+        self.login_button = ctk.CTkButton(self.center_frame, text="Login", command=self.login, **button_style)
         self.login_button.pack(pady=20)
 
     def login(self):
