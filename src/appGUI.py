@@ -411,9 +411,7 @@ class EmailLoginWindow(BaseWindow):
     def open_main_window(self, username, password):
         # Create the main application window
         main_window = ctk.CTk()
-        bot = Bot()
-        bot.sender_email = username
-        bot.email_password = password
+        bot = Bot(sender_email=username, email_password=password)
         if self.template_flag:
             app = SendEmailTemplateWindow(main_window, bot)
         else:

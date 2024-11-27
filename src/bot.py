@@ -29,9 +29,9 @@ QUEUE_SEPARATOR = '[queue]'
 
 
 class Bot:
-    def __init__(self):
-        self.sender_email: str
-        self.email_password: str
+    def __init__(self, sender_email: str | None = None, email_password: str | None = None):
+        self.sender_email = sender_email
+        self.email_password = email_password
         self.file_queue = []
 
     def clear_queue(self):

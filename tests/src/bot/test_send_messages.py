@@ -6,7 +6,7 @@ from src.bot import Bot
 
 
 def test_send_messages():
-    bot = Bot()
+    bot = Bot(sender_email='foo@example.com', email_password='<PASSWORD>')
 
     bot.is_connected = MagicMock(return_value=True)
 
@@ -27,7 +27,7 @@ def test_send_messages():
         assert result['Status'].to_list() == ['Sucesso', 'Sucesso']
 
 def test_send_messages_no_internet():
-    bot = Bot()
+    bot = Bot(sender_email='foo@example.com', email_password='<PASSWORD>')
 
     bot.is_connected = MagicMock(return_value=False)
 
@@ -41,7 +41,7 @@ def test_send_messages_no_internet():
     assert result['Status'].to_list() == ['Falha: Internet não disponível']
 
 def test_send_messages_empty_sheet():
-    bot = Bot()
+    bot = Bot(sender_email='foo@example.com', email_password='<PASSWORD>')
 
     bot.is_connected = MagicMock(return_value=True)
 

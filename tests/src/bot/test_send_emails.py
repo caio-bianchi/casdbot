@@ -25,7 +25,7 @@ def test_send_emails():
         assert result['Status'].to_list() == ['Sucesso', 'Sucesso']
 
 def test_send_emails_no_internet():
-    bot = Bot()
+    bot = Bot(sender_email='foo@example.com', email_password='<PASSWORD>')
 
     bot.is_connected = MagicMock(return_value=False) # Simula a falta de conexão
 
@@ -40,11 +40,12 @@ def test_send_emails_no_internet():
     assert result['Status'].to_list() == ['Falha: Internet não disponível']
 
 def test_send_emails_with_attachments():
-    bot = Bot()
+    bot = Bot(sender_email='foo@example.com', email_password='<PASSWORD>')
 
     bot.is_connected = MagicMock(return_value=True)
 
-    bot.add_to_queue("/path/to/test_file.txt")
+    # Necessario criar um stub .txt sem nada
+    bot.add_to_queue("test_file.txt")
 
     sheet = pd.DataFrame({
         'Nome': ['foo'],
@@ -63,7 +64,7 @@ def test_send_emails_with_attachments():
 
 
 def test_send_emails_empty_sheet():
-    bot = Bot()
+    bot = Bot(sender_email='foo@example.com', email_password='<PASSWORD>')
 
     bot.is_connected = MagicMock(return_value=True)
 
