@@ -49,6 +49,7 @@ class MessageWindow:
         self.root.title("CASDbot")
         self.root.geometry(WINDOWS_SIZE)
         self.root.configure(fg_color=bg_color)
+        self.root.wm_iconbitmap(ICON)
 
         # Button common style
         button_style = {
@@ -440,11 +441,29 @@ class EmailLoginWindow(BaseWindow):
 
         self.master.bind("<Return>", lambda event: self.login())
 
+        button_style = {
+            "corner_radius": 8,  # Rounded corners
+            "fg_color": button_color,  # Button background color
+            "height": 30,  # Button height
+            "font": ("Montserrat", 16, "bold"),  # Font style
+            "text_color": "white",  # Text color
+            "border_width": 2,  # Border width
+            "border_color": border_color,  # Border color
+            "hover_color": hover_color  # Hover color
+        }
+
+        # Back button in the top-left corner
+        self.back_button = ctk.CTkButton(
+            master, text="← Voltar", command=self.go_back, **button_style
+        )
+        self.back_button.place(x=10, y=10)
+
         # Username Label and Entry
         self.username_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
         self.username_frame.pack(pady=10, fill="x")
 
-        self.username_label = ctk.CTkLabel(self.username_frame, text="Email de envio")
+        self.username_label = ctk.CTkLabel(self.username_frame, text="Email de envio", font=("Montserrat", 14),
+                                           text_color="black")
         self.username_label.pack(pady=(0, 5))
         self.username_entry = ctk.CTkEntry(self.username_frame)
         self.username_entry.pack()
@@ -453,21 +472,11 @@ class EmailLoginWindow(BaseWindow):
         self.password_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
         self.password_frame.pack(pady=10, fill="x")
 
-        self.password_label = ctk.CTkLabel(self.password_frame, text="Senha de 16 caracteres")
+        self.password_label = ctk.CTkLabel(self.password_frame, text="Senha de 16 caracteres", font=("Montserrat", 14),
+                                           text_color="black")
         self.password_label.pack(pady=(0, 5))
         self.password_entry = ctk.CTkEntry(self.password_frame, show='*')
         self.password_entry.pack()
-
-        button_style = {
-            "corner_radius": 32,  # Slightly rounded corners for a smoother look
-            "fg_color": button_color,  # Background color
-            "height": 30,  # Height of the button
-            "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
-            "text_color": "white",  # Text color
-            "border_width": 2,  # Border width to create the raised effect
-            "border_color": border_color,  # Border color (this should match the background or complement it)
-            "hover_color": hover_color
-        }
 
         # Login Button
         self.login_button = ctk.CTkButton(self.center_frame, text="Login", command=self.login, **button_style)
@@ -497,6 +506,14 @@ class EmailLoginWindow(BaseWindow):
             app = SendEmailTemplateWindow(main_window, bot)
         else:
             app = SendEmailWindow(main_window, bot)
+        main_window.mainloop()
+
+    def go_back(self):
+        # Closes current window and returns to the SelectionWindow
+        self.close_window()
+        main_window = ctk.CTk()
+        bot = Bot()
+        SelectionWindow(main_window, bot)
         main_window.mainloop()
 
 
