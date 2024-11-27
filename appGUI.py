@@ -5,8 +5,13 @@ from bot import Bot
 import customtkinter as ctk
 from tkinter import filedialog, messagebox, Text, ttk
 import pandas as pd
+from PIL import Image, ImageTk
 
 WINDOWS_SIZE = "1080x720"
+bg_color = "#26657b"
+button_color = "#ffb444"
+border_color = "#e69500"  # Border color (this should match the background or complement it)
+hover_color = "#ff9800"
 if "nt" == os.name:
     ICON = "icon.ico"    # for windows
 else:
@@ -17,7 +22,7 @@ ctk.set_default_color_theme("blue")  # Options: "blue", "dark-blue", "green"
 
 
 class BaseWindow:
-    def __init__(self, master, title, size=WINDOWS_SIZE, bg_color="lightblue", report=None):
+    def __init__(self, master, title, size=WINDOWS_SIZE, report=None):
         self.master = master
         self.master.title(title)
         self.master.geometry(size)
@@ -34,7 +39,7 @@ class BaseWindow:
 
 
 class MessageWindow:
-    def __init__(self, root: ctk.CTk, bot: Bot, bg_color="lightblue"):
+    def __init__(self, root: ctk.CTk, bot: Bot):
         self.root = root
         self.bot = bot
         self.sheet = None  # This will hold the DataFrame after loading the file
@@ -45,9 +50,21 @@ class MessageWindow:
         self.root.geometry(WINDOWS_SIZE)
         self.root.configure(fg_color=bg_color)
 
+        # Button common style
+        button_style = {
+            "corner_radius": 8,  # Slightly rounded corners for a smoother look
+            "fg_color": button_color,  # Background color
+            "height": 30,  # Height of the button
+            "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
+            "text_color": "white",  # Text color
+            "border_width": 2,  # Border width to create the raised effect
+            "border_color": border_color,  # Border color (this should match the background or complement it)
+            "hover_color": hover_color
+        }
+
         # "Back" button in the top-left corner
         self.back_button = ctk.CTkButton(
-            root, text="← Back", command=self.go_back, corner_radius=8
+            root, text="← Voltar", command=self.go_back, **button_style
         )
         self.back_button.pack(anchor="nw", padx=10, pady=10)
 
@@ -60,11 +77,11 @@ class MessageWindow:
         self.bottom_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
         # Load File button
-        self.load_button = ctk.CTkButton(self.top_frame, text="Carregar Excel", command=self.load_file)
+        self.load_button = ctk.CTkButton(self.top_frame, text="Carregar Excel", command=self.load_file, **button_style)
         self.load_button.pack(pady=5)
 
         # Send Messages button
-        self.send_button = ctk.CTkButton(self.top_frame, text="Enviar Mensagens", command=self.send_messages)
+        self.send_button = ctk.CTkButton(self.top_frame, text="Enviar Mensagens", command=self.send_messages, **button_style)
         self.send_button.pack(pady=5)
 
         # Treeview widget for displaying the DataFrame
@@ -132,67 +149,49 @@ class MessageWindow:
 class WelcomeWindow(BaseWindow):
     def __init__(self, master):
         super().__init__(master, title="CASDbot - Welcome")
+        self.master.attributes("-fullscreen", False)  # Start in windowed mode
 
-        # Welcome message
-        self.welcome_label = ctk.CTkLabel(self.center_frame,
-                                          text="Bem vindo ao CASDbot,\n o enviador automático de mensagens do CASD!",
-                                          font=("Montserrat", 20))
-        self.welcome_label.pack(pady=20)
+        # Load the original image
+        self.original_image = Image.open("imagens/welcome_window.jpg")
 
-        # Proceed button
-        self.proceed_button = ctk.CTkButton(self.center_frame, text="Prosseguir para o Login",
-                                            command=self.open_login_window)
-        self.proceed_button.pack(pady=10)
+        # Resize the image to match the window size initially
+        self.bg_image = ctk.CTkImage(self.original_image, size=(1080, 720))
 
-    def open_login_window(self):
-        self.close_window()
-        login_root = ctk.CTk()
-        LoginWindow(login_root)
-        login_root.mainloop()
+        # Add the image as the background
+        self.background_label = ctk.CTkLabel(self.master, image=self.bg_image, text="")
+        self.background_label.place(relx=0, rely=0, relwidth=1, relheight=1)
 
+        button_style = {
+            "corner_radius": 8,  # Slightly rounded corners for a smoother look
+            "fg_color": button_color,  # Background color
+            "height": 60,  # Height of the button
+            "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
+            "text_color": "white",  # Text color
+            "border_width": 2,  # Border width to create the raised effect
+            "border_color": border_color,  # Border color (this should match the background or complement it)
+            "hover_color": hover_color
+        }
 
-class LoginWindow(BaseWindow):
-    def __init__(self, master, bg_color="lightblue"):
-        super().__init__(master, title="CASDbot - Login")
+        # Place the button directly on the master, ensuring it's on top
+        self.proceed_button = ctk.CTkButton(
+            self.master,
+            text="Começar a mandar mensagens!", command=self.open_main_window, **button_style)
+        self.proceed_button.place(relx=0.5, rely=0.6, anchor="center")
 
-        self.master.bind("<Return>", lambda event: self.login())
+        # Bind the resize event to adjust the image size dynamically
+        self.master.bind("<Configure>", self.resize_background)
 
-        # Username Label and Entry
-        self.username_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
-        self.username_frame.pack(pady=10, fill="x")
-
-        self.username_label = ctk.CTkLabel(self.username_frame, text="Usuário")
-        self.username_label.pack(pady=(0, 5))
-        self.username_entry = ctk.CTkEntry(self.username_frame)
-        self.username_entry.pack()
-
-        # Password Label and Entry
-        self.password_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
-        self.password_frame.pack(pady=10, fill="x")
-
-        self.password_label = ctk.CTkLabel(self.password_frame, text="Senha")
-        self.password_label.pack(pady=(0, 5))
-        self.password_entry = ctk.CTkEntry(self.password_frame, show='*')
-        self.password_entry.pack()
-
-        # Login Button
-        self.login_button = ctk.CTkButton(self.center_frame, text="Login", corner_radius=32, command=self.login)
-        self.login_button.pack(pady=20)
-
-    def login(self):
-        # Simulated login check
-        username = self.username_entry.get()
-        password = self.password_entry.get()
-
-        # Here you can check the credentials
-        if username == "admin" and password == "password":  # Example credentials
-            self.close_window()  # Close login window
-            self.open_main_window()  # Open the main application window
-        else:
-            messagebox.showerror("Erro", "Usuário ou Senha incorretos.")
+    def resize_background(self, event):
+        """Resize the background image to fit the window."""
+        new_width = event.width
+        new_height = event.height
+        resized_image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
+        self.bg_image = ctk.CTkImage(resized_image, size=(new_width, new_height))
+        self.background_label.configure(image=self.bg_image)
 
     def open_main_window(self):
         # Create the main application window
+        self.close_window()
         main_window = ctk.CTk()
         bot = Bot()
         app = SelectionWindow(main_window, bot)
@@ -205,22 +204,62 @@ class SelectionWindow(BaseWindow):
         self.master = master
         self.bot = bot
 
-        # Select the window
-        self.welcome_label = ctk.CTkLabel(self.center_frame, text="O que você deseja fazer hoje?", font=("Montserrat", 20))
-        self.welcome_label.pack(pady=20)
+        # Load the original image for background
+        try:
+            self.original_image = Image.open("imagens/main_window.jpg")
+            print("Image loaded successfully.")
+        except Exception as e:
+            print(f"Failed to load image: {e}")
+            return
 
-        # Send messages button
-        self.send_message_button = ctk.CTkButton(self.center_frame, text="Enviar mensagens por planilha", command=self.open_send_message_window)
-        self.send_message_button.pack(pady=10)
+        # Resize the image to match the window size initially
+        self.bg_image = ctk.CTkImage(self.original_image, size=(1080, 720))
 
-        self.send_message_button = ctk.CTkButton(self.center_frame, text="Enviar mensagens por template", command=self.open_send_message_template_window)
-        self.send_message_button.pack(pady=10)
+        # Add the image as the background using a label
+        self.background_label = ctk.CTkLabel(self.master, image=self.bg_image, text="")
+        # Set the background image at the very back of the window
+        self.background_label.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        self.send_email_button = ctk.CTkButton(self.center_frame, text="Enviar e-mails por planilha", command=self.open_send_email_window)
-        self.send_email_button.pack(pady=10)
-        
-        self.send_email_button = ctk.CTkButton(self.center_frame, text="Enviar e-mails por template", command=self.open_send_email_template_window)
-        self.send_email_button.pack(pady=10)
+        # Button common style
+        button_style = {
+            "corner_radius": 8,  # Slightly rounded corners for a smoother look
+            "fg_color": button_color,  # Background color
+            "height": 60,  # Height of the button
+            "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
+            "text_color": "white",  # Text color
+            "border_width": 2,  # Border width to create the raised effect
+            "border_color": border_color,  # Border color (this should match the background or complement it)
+            "hover_color": hover_color
+        }
+
+        # Create and place buttons directly on the master window (on top of the background image)
+        self.send_message_button = ctk.CTkButton(self.master, text="Enviar mensagens por planilha",
+                                                 command=self.open_send_message_window, **button_style)
+        self.send_message_button.place(relx=0.5, rely=0.4, anchor="center")
+
+        self.send_message_template_button = ctk.CTkButton(self.master, text="Enviar mensagens por template",
+                                                          command=self.open_send_message_template_window,
+                                                          **button_style)
+        self.send_message_template_button.place(relx=0.5, rely=0.5, anchor="center")
+
+        self.send_email_button = ctk.CTkButton(self.master, text="Enviar e-mails por planilha",
+                                               command=self.open_send_email_window, **button_style)
+        self.send_email_button.place(relx=0.5, rely=0.6, anchor="center")
+
+        self.send_email_template_button = ctk.CTkButton(self.master, text="Enviar e-mails por template",
+                                                        command=self.open_send_email_template_window, **button_style)
+        self.send_email_template_button.place(relx=0.5, rely=0.7, anchor="center")
+
+        # Bind the resize event to adjust the background image size dynamically
+        self.master.bind("<Configure>", self.resize_background)
+
+    def resize_background(self, event):
+        """Resize the background image to fit the window."""
+        new_width = event.width
+        new_height = event.height
+        resized_image = self.original_image.resize((new_width, new_height), Image.ANTIALIAS)
+        self.bg_image = ctk.CTkImage(resized_image, size=(new_width, new_height))
+        self.background_label.configure(image=self.bg_image)
 
     def open_send_message_window(self):
         # Create the main application window
@@ -276,15 +315,27 @@ class SendMessageTemplateWindow(MessageWindow):
         super().__init__(root, bot)
         self.bot.clear_queue()
         # Template Text input
-        template_label = ctk.CTkLabel(self.top_frame, text="Enter Template Text:")
+        template_label = ctk.CTkLabel(self.top_frame, text="Insira o Texto do Template:", font=("Montserrat", 20), text_color="white")
         template_label.pack(pady=(10, 0))
 
         self.template_text = ctk.CTkTextbox(self.top_frame, height=100, width=800)
         self.template_text.pack(pady=(5, 15), padx=20)
-        
-        self.add_file_button = ctk.CTkButton(self.top_frame, text="Adicionar Arquivo", command=self.load_files)
+
+        # Button common style
+        button_style = {
+            "corner_radius": 8,  # Slightly rounded corners for a smoother look
+            "fg_color": button_color,  # Background color
+            "height": 30,  # Height of the button
+            "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
+            "text_color": "white",  # Text color
+            "border_width": 2,  # Border width to create the raised effect
+            "border_color": border_color,  # Border color (this should match the background or complement it)
+            "hover_color": hover_color
+        }
+
+        self.add_file_button = ctk.CTkButton(self.top_frame, text="Adicionar Arquivo", command=self.load_files, **button_style)
         self.add_file_button.pack(pady=10)
-    
+
     def load_files(self):
         '''Open a file dialog to select the file to be sent.'''
         file_path = filedialog.askopenfilename(
@@ -337,8 +388,7 @@ class SendEmailTemplateWindow(MessageWindow):
         super().__init__(root, bot)
         # Template Text input
         self.bot.clear_queue()
-
-        template_label = ctk.CTkLabel(self.top_frame, text="Insira o Texto Template:")
+        template_label = ctk.CTkLabel(self.top_frame, text="Insira o Texto do Template:", font=("Montserrat", 20), text_color="white")
         template_label.pack(pady=(10, 0))
 
         self.template_text = ctk.CTkTextbox(self.top_frame, height=100, width=800)
@@ -358,7 +408,7 @@ class SendEmailTemplateWindow(MessageWindow):
                 self.bot.add_to_queue(file_path)
             except Exception as e:
                 messagebox.showerror("Error", f"Falha ao carregar arquivo: {e}")
-    
+      
     def send_messages(self):
         '''Ensure a file is loaded before sending emails'''
         if self.sheet is not None:
@@ -380,9 +430,20 @@ class SendEmailTemplateWindow(MessageWindow):
 class ReviewWindow(BaseWindow):
     def __init__(self, master, report=None):
         super().__init__(master, title="CASDbot", report=report)
+        # Button common style
+        button_style = {
+            "corner_radius": 8,  # Slightly rounded corners for a smoother look
+            "fg_color": button_color,  # Background color
+            "height": 30,  # Height of the button
+            "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
+            "text_color": "white",  # Text color
+            "border_width": 2,  # Border width to create the raised effect
+            "border_color": border_color,  # Border color (this should match the background or complement it)
+            "hover_color": hover_color
+        }
         # "Back" button in the top-left corner
         self.back_button = ctk.CTkButton(
-            master, text="← Voltar", command=self.go_back, corner_radius=8
+            master, text="← Voltar", command=self.go_back, **button_style
         )
         self.back_button.place(x=0, y=0)
 
@@ -396,7 +457,7 @@ class ReviewWindow(BaseWindow):
         self.scrollbar.pack(side="right", fill="y")
 
         # Download Report button
-        self.download_button = ctk.CTkButton(master, text="Baixar Relatório", command=self.download_report)
+        self.download_button = ctk.CTkButton(master, text="Baixar Relatório", command=self.download_report, **button_style)
         self.download_button.pack(pady=10)
 
         self.display_dataframe()
