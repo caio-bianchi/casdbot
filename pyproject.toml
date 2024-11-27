@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "casdbot"
+version = "1.0.0"
+description = "A bot to send messages"
+authors = ["Android7001 <m_levipintosousa@hotmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+selenium = "^4.27.1"
+pandas = "^2.2.3"
+customtkinter = "^5.2.2"
+openpyxl = "^3.1.5"
+chromedriver-autoinstaller = "^0.6.4"
+pytest = "^8.3.3"
+pytest-benchmark = "^5.1.0"
+pytest-dotenv = "^0.5.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = "."
+testspaths = "tests"
+env_files = "test.env"
