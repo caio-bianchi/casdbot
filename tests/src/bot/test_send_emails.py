@@ -3,7 +3,10 @@ from unittest.mock import patch, MagicMock
 import pandas as pd
 
 from src.bot import Bot
+import os
 
+project_root = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(project_root, "test_file.txt")
 
 def test_send_emails():
     bot = Bot()
@@ -44,8 +47,7 @@ def test_send_emails_with_attachments():
 
     bot.is_connected = MagicMock(return_value=True)
 
-    # Necessario criar um stub .txt sem nada
-    bot.add_to_queue("test_file.txt")
+    bot.add_to_queue(file_path)
 
     sheet = pd.DataFrame({
         'Nome': ['foo'],
