@@ -39,10 +39,10 @@ class BaseWindow:
 
 
 class MessageWindow:
-    def __init__(self, root: ctk.CTk, bot: Bot):
+    def __init__(self, root: ctk.CTk, bot: Bot, sheet = None):
         self.root = root
         self.bot = bot
-        self.sheet = None  # This will hold the DataFrame after loading the file
+        self.sheet = sheet  # This will hold the DataFrame after loading the file
         self.report = None  # This will hold the DataFrame after loading the file
 
         # Set up the GUI
@@ -292,8 +292,8 @@ class SelectionWindow(BaseWindow):
         send_email_window.mainloop()
 
 class SendMessageWindow(MessageWindow):
-    def __init__(self, root: ctk.CTk, bot: Bot):
-        super().__init__(root, bot)
+    def __init__(self, root: ctk.CTk, bot: Bot, sheet = None):
+        super().__init__(root, bot, sheet)
 
     def send_messages(self):
         '''Ensure a file is loaded before sending messages'''
@@ -483,8 +483,10 @@ class SendEmailTemplateWindow(MessageWindow):
 
 
 class ReviewWindow(BaseWindow):
-    def __init__(self, master, report=None):
+    def __init__(self, master, whatsapp_flag: bool, report = None):
+        print(report)
         super().__init__(master, title="CASDbot", report=report)
+        self.whatsapp_flag = whatsapp_flag
         # Button common style
         button_style = {
             "corner_radius": 8,  # Slightly rounded corners for a smoother look
@@ -511,11 +513,31 @@ class ReviewWindow(BaseWindow):
         self.df_display.configure(yscroll=self.scrollbar.set)
         self.scrollbar.pack(side="right", fill="y")
 
+        print(self.report)
+
+        self.failed_sheet = self.report[self.report['Status'] != 'Sucesso']
+        if not self.failed_sheet.empty:
+            # Resend failed messages button
+            self.resend_button = ctk.CTkButton(master, text="Reenviar Mensagens Falhas", command=self.resend_failed_messages, **button_style)
+            self.resend_button.pack(pady=10)
+
         # Download Report button
         self.download_button = ctk.CTkButton(master, text="Baixar Relatório", command=self.download_report, **button_style)
         self.download_button.pack(pady=10)
 
         self.display_dataframe()
+
+    def resend_failed_messages(self):
+        # Create the main application window
+        resend_message_window = ctk.CTk()
+        bot = Bot()
+        if self.whatsapp_flag:
+            app = SendMessageWindow(resend_message_window, bot, self.failed_sheet)
+        else:
+            app = SendEmailWindow(resend_message_window, bot, self.failed_sheet)
+
+        self.master.destroy()
+        resend_message_window.mainloop()
 
     def display_dataframe(self):
         # Clear any existing content in the Treeview

@@ -16,7 +16,8 @@ import time
 import urllib
 import socket
 
-MESSAGE_DT = 12
+MESSAGE_DT = 5
+MAX_WAIT_TIME = 20
 XPATH_SEND_MESSAGE_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div/div/p'
 ADDITIONAL_TOOLS_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/div/div/div/span'
 ATTACHMENTS_BUTTON = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/button'
@@ -87,8 +88,10 @@ class Bot:
 
         def wait_whatsapp_end_loading(browser) -> None:
             """Waits for WhatsApp Web to fully load."""
-            while len(browser.find_elements(By.ID, "side")) < 1:
+            t: float = 0
+            while len(browser.find_elements(By.ID, "side")) < 1 and t < MAX_WAIT_TIME:
                 time.sleep(1)
+                t += 1
             time.sleep(5)  # Espera adicional para assegurar o carregamento
 
         def was_message_sent(browser) -> bool:
@@ -166,6 +169,7 @@ class Bot:
 
         # Add the 'Status' column to the DataFrame
         sheet['Status'] = status_list
+        print(sheet)
         return sheet
 
     def send_emails(self, sheet: pd.DataFrame) -> pd.DataFrame:
