@@ -27,11 +27,11 @@ MESSAGE_SEPARATOR = '[break]'
 FILE_SEPARATOR = '[file]'
 QUEUE_SEPARATOR = '[queue]'
 
-SENDER_EMAIL = None
-PASSWORD = None
 
 class Bot:
     def __init__(self):
+        self.sender_email: str
+        self.email_password: str
         self.file_queue = []
 
     def clear_queue(self):
@@ -178,7 +178,7 @@ class Bot:
             receiver = sheet.loc[i, "Email"]
             
             em = MIMEMultipart()
-            em['From'] = SENDER_EMAIL
+            em['From'] = self.sender_email
             em['To'] = receiver
             em['Subject'] = 'CASD'
             em.attach(MIMEText(message))
@@ -196,8 +196,8 @@ class Bot:
 
             with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as interface:
                 try:
-                    interface.login(SENDER_EMAIL, PASSWORD)
-                    interface.sendmail(SENDER_EMAIL, receiver, em.as_string())
+                    interface.login(self.sender_email, self.email_password)
+                    interface.sendmail(self.sender_email, receiver, em.as_string())
                     status_list.append("Sucesso")  # Se o envio foi bem-sucedido
                 except Exception as e:
                     # Check if the message might have been sent despite an exception

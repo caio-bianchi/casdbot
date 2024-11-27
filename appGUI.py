@@ -280,16 +280,14 @@ class SelectionWindow(BaseWindow):
     def open_send_email_window(self):
         # Create the main application window
         send_email_window = ctk.CTk()
-        bot = Bot()
-        app = SendEmailWindow(send_email_window, bot)
+        app = EmailLoginWindow(send_email_window, False)
         self.master.destroy()
         send_email_window.mainloop()
 
     def open_send_email_template_window(self):
         # Create the main application window
         send_email_window = ctk.CTk()
-        bot = Bot()
-        app = SendEmailTemplateWindow(send_email_window, bot)
+        app = EmailLoginWindow(send_email_window, True)
         self.master.destroy()
         send_email_window.mainloop()
 
@@ -364,6 +362,63 @@ class SendMessageTemplateWindow(MessageWindow):
             self.open_review_window()
         else:
             messagebox.showwarning("Warning", "Por favor carregar o Excel primeiro")
+
+class EmailLoginWindow(BaseWindow):
+    def __init__(self, master, template_flag: bool, bg_color="lightblue"):
+        super().__init__(master, title="Email - Login")
+        self.template_flag = template_flag
+        self.username: str
+        self.password: str
+
+        self.master.bind("<Return>", lambda event: self.login())
+
+        # Username Label and Entry
+        self.username_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
+        self.username_frame.pack(pady=10, fill="x")
+
+        self.username_label = ctk.CTkLabel(self.username_frame, text="Email de envio")
+        self.username_label.pack(pady=(0, 5))
+        self.username_entry = ctk.CTkEntry(self.username_frame)
+        self.username_entry.pack()
+
+        # Password Label and Entry
+        self.password_frame = ctk.CTkFrame(self.center_frame, fg_color=bg_color)
+        self.password_frame.pack(pady=10, fill="x")
+
+        self.password_label = ctk.CTkLabel(self.password_frame, text="Senha de 16 caracteres")
+        self.password_label.pack(pady=(0, 5))
+        self.password_entry = ctk.CTkEntry(self.password_frame, show='*')
+        self.password_entry.pack()
+
+        # Login Button
+        self.login_button = ctk.CTkButton(self.center_frame, text="Login", corner_radius=32, command=self.login)
+        self.login_button.pack(pady=20)
+
+    def login(self):
+        # Simulated login check
+        username = self.username_entry.get()
+        password = self.password_entry.get()
+
+        # Here you can check the credentials
+        if '@gmail.com' not in username:  # Example credentials
+            messagebox.showerror("Erro", "Usuário Inválido")
+        elif len(password) != 19 or len(password.split(' ')) != 4:
+            messagebox.showerror("Erro", "Senha Inválida")
+        else:
+            self.close_window()  # Close login window
+            self.open_main_window(username, password)  # Open the main application window
+
+    def open_main_window(self, username, password):
+        # Create the main application window
+        main_window = ctk.CTk()
+        bot = Bot()
+        bot.sender_email = username
+        bot.email_password = password
+        if self.template_flag:
+            app = SendEmailTemplateWindow(main_window, bot)
+        else:
+            app = SendEmailWindow(main_window, bot)
+        main_window.mainloop()
 
 
 class SendEmailWindow(MessageWindow):
