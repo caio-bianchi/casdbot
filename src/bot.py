@@ -16,7 +16,7 @@ import urllib
 import socket
 
 MESSAGE_DT = 5
-MAX_WAIT_TIME = 20
+MAX_WAIT_TIME = 60
 XPATH_SEND_MESSAGE_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div/div/p'
 ADDITIONAL_TOOLS_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/div/div/div/span'
 ATTACHMENTS_BUTTON = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/button'
@@ -27,6 +27,9 @@ MESSAGE_SEPARATOR = '[break]'
 FILE_SEPARATOR = '[file]'
 QUEUE_SEPARATOR = '[queue]'
 
+def is_media(file_extension: str) -> bool:
+    media_types = set(['png', 'svg', 'jpeg', 'jpg', 'gif', 'mp4', '3gpp'])
+    return file_extension in media_types
 
 class Bot:
     def __init__(self, sender_email: str | None = None, email_password: str | None = None):
@@ -140,8 +143,19 @@ class Bot:
                         WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, ATTACHMENTS_BUTTON))
                         ).click()
+                        file_extension = text.split('.')
+                        if len(file_extension) <= 1:
+                            raise Exception("Invalid file path")
+                        else:
+                            file_extension = file_extension[-1]
+
+                        if is_media(file_extension):
+                            xpath = MEDIA_XPATH
+                        else:
+                            xpath = DOCS_XPATH
+
                         WebDriverWait(browser, 2*MESSAGE_DT).until(
-                            EC.presence_of_element_located((By.XPATH, MEDIA_XPATH))
+                            EC.presence_of_element_located((By.XPATH, xpath))
                         ).send_keys(text)
                         WebDriverWait(browser, 2*MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, SEND_MEDIA_XPATH))
