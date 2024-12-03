@@ -114,10 +114,10 @@ class Bot:
             link = f"https://web.whatsapp.com/send?phone={numero}"
 
             # Check for internet connection before attempting to send a message
-            if not self.is_connected():
-                status_list.append("Falha: Internet não disponível")
-                print(f"Erro ao enviar mensagem para {numero}: Internet não disponível")
-                continue
+            # if not self.is_connected():
+            #     status_list.append("Falha: Internet não disponível")
+            #     print(f"Erro ao enviar mensagem para {numero}: Internet não disponível")
+            #     continue
 
             try:
                 browser.get(link)
