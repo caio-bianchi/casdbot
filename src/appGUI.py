@@ -7,12 +7,9 @@ from tkinter import filedialog, messagebox, Text, ttk
 import pandas as pd
 from PIL import Image, ImageTk
 import utils
+from utils import resource_path
 
 bg_color = "#26657b"
-if "nt" == os.name:
-    ICON = "icon.ico"    # for windows
-else:
-    ICON = "@icon.xbm"   # for linux
 # Set the appearance mode and theme
 ctk.set_appearance_mode("Light")  # "System", "Dark", or "Light"
 ctk.set_default_color_theme("blue")  # Options: "blue", "dark-blue", "green"
@@ -23,7 +20,7 @@ class BaseWindow:
         self.master = master
         self.master.title(title)
         self.master.geometry(size)
-        self.master.wm_iconbitmap(ICON)
+        self.master.wm_iconbitmap(utils.ICON)
         self.master.configure(fg_color=bg_color)
         self.report = report  # This will hold the DataFrame after loading the file
 
@@ -46,7 +43,7 @@ class MessageWindow:
         self.root.title("CASDbot")
         self.root.geometry(utils.WINDOWS_SIZE)
         self.root.configure(fg_color=bg_color)
-        self.root.wm_iconbitmap(ICON)
+        self.root.wm_iconbitmap(utils.ICON)
 
         # Button common style
         button_style = {
@@ -150,7 +147,7 @@ class WelcomeWindow(BaseWindow):
         self.master.attributes("-fullscreen", False)  # Start in windowed mode
 
         # Load the original image
-        self.original_image = Image.open("imagens/welcome_window.jpg")
+        self.original_image = Image.open(resource_path("imagens/welcome_window.jpg"))
 
         # Resize the image to match the window size initially
         self.bg_image = ctk.CTkImage(self.original_image, size=(1080, 720))
@@ -188,7 +185,7 @@ class WelcomeWindow(BaseWindow):
         help_popup.title("Ajuda")
 
         # Set the icon for the popup window
-        help_popup.iconbitmap(ICON)
+        help_popup.iconbitmap(utils.ICON)
 
         # Bring the popup to the front
         help_popup.attributes('-topmost', 1)  # This ensures that the popup is always on top
@@ -238,7 +235,7 @@ class SelectionWindow(BaseWindow):
 
         # Load the original image for background
         try:
-            self.original_image = Image.open("imagens/main_window.jpg")
+            self.original_image = Image.open(resource_path("imagens/main_window.jpg"))
             print("Image loaded successfully.")
         except Exception as e:
             print(f"Failed to load image: {e}")
@@ -294,7 +291,7 @@ class SelectionWindow(BaseWindow):
         help_popup.title("Ajuda")
 
         # Set the icon for the popup window
-        help_popup.iconbitmap(ICON)
+        help_popup.iconbitmap(utils.ICON)
 
         # Bring the popup to the front
         help_popup.attributes('-topmost', 1)  # This ensures that the popup is always on top

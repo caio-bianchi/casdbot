@@ -1,3 +1,11 @@
+import os
+import sys
+
+def resource_path(relative_path):
+    base_path = getattr(sys, '_MEIPASS', os.path.abspath("."))
+    return os.path.join(base_path, relative_path)
+
+ICON = resource_path("icon.ico")
 MESSAGE_DT = 5
 MAX_WAIT_TIME = 60
 XPATH_SEND_MESSAGE_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div/div/p'
