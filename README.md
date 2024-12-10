@@ -5,6 +5,6 @@ Para executar o projeto, faça os seguintes comandos:
 - python -m venv venv
 - pip install poetry
 - poetry install
-- python run src/appGUI.py
+- python src/appGUI.py
 
   
