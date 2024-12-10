@@ -14,18 +14,10 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 import urllib
 import socket
+import utils
 
-MESSAGE_DT = 5
-MAX_WAIT_TIME = 60
-XPATH_SEND_MESSAGE_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[2]/div[1]/div/div/p'
-ADDITIONAL_TOOLS_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/div/div/div/span'
-ATTACHMENTS_BUTTON = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/button'
-MEDIA_XPATH = '//input[@accept="image/*,video/mp4,video/3gpp,video/quicktime"]'
-DOCS_XPATH  = '//input[@accept="*"]'
-SEND_MEDIA_XPATH = '//*[@id="app"]/div/div[3]/div[2]/div[2]/span/div/div/div/div[2]/div/div[2]/div[2]/div/div'
-MESSAGE_SEPARATOR = '[break]'
-FILE_SEPARATOR = '[file]'
-QUEUE_SEPARATOR = '[queue]'
+
+# ADDITIONAL_TOOLS_FIELD = '//*[@id="main"]/footer/div[1]/div/span/div/div[1]/div[2]/div/div/div/span'
 
 def is_media(file_extension: str) -> bool:
     media_types = set(['png', 'svg', 'jpeg', 'jpg', 'gif', 'mp4', '3gpp'])
@@ -52,11 +44,11 @@ class Bot:
             return False
     
     def inner_message_parser(self, message: str) -> list[tuple[bool, str]]:
-        message = message.split(FILE_SEPARATOR)
+        message = message.split(utils.FILE_SEPARATOR)
         messages_list = []
         for i in range(len(message)):
             if i % 2 == 0:
-                chunk = message[i].split(MESSAGE_SEPARATOR)
+                chunk = message[i].split(utils.MESSAGE_SEPARATOR)
                 for line in chunk:
                     messages_list.append((False, line))
             else:
@@ -65,7 +57,7 @@ class Bot:
         
 
     def message_parser(self, message: str) -> list[tuple[bool, str]]:
-        message = message.split(QUEUE_SEPARATOR)
+        message = message.split(utils.QUEUE_SEPARATOR)
         messages_list = []
 
         for i in range(len(message)):
@@ -91,7 +83,7 @@ class Bot:
         def wait_whatsapp_end_loading(browser) -> None:
             """Waits for WhatsApp Web to fully load."""
             t: float = 0
-            while len(browser.find_elements(By.ID, "side")) < 1 and t < MAX_WAIT_TIME:
+            while len(browser.find_elements(By.ID, "side")) < 1 and t < utils.MAX_WAIT_TIME:
                 time.sleep(1)
                 t += 1
             time.sleep(5)  # Espera adicional para assegurar o carregamento
@@ -140,8 +132,8 @@ class Bot:
                 for is_file, text in messages:
                     print(f"\t\t\t{is_file}: {text}")
                     if is_file:
-                        WebDriverWait(browser, 2*MESSAGE_DT).until(
-                            EC.presence_of_element_located((By.XPATH, ATTACHMENTS_BUTTON))
+                        WebDriverWait(browser, 2*utils.MESSAGE_DT).until(
+                            EC.presence_of_element_located((By.XPATH, utils.ATTACHMENTS_BUTTON))
                         ).click()
                         file_extension = text.split('.')
                         if len(file_extension) <= 1:
@@ -150,24 +142,24 @@ class Bot:
                             file_extension = file_extension[-1]
 
                         if is_media(file_extension):
-                            xpath = MEDIA_XPATH
+                            xpath = utils.MEDIA_XPATH
                         else:
-                            xpath = DOCS_XPATH
+                            xpath = utils.DOCS_XPATH
 
-                        WebDriverWait(browser, 2*MESSAGE_DT).until(
+                        WebDriverWait(browser, 2*utils.MESSAGE_DT).until(
                             EC.presence_of_element_located((By.XPATH, xpath))
                         ).send_keys(text)
-                        WebDriverWait(browser, 2*MESSAGE_DT).until(
-                            EC.presence_of_element_located((By.XPATH, SEND_MEDIA_XPATH))
+                        WebDriverWait(browser, 2*utils.MESSAGE_DT).until(
+                            EC.presence_of_element_located((By.XPATH, utils.SEND_MEDIA_XPATH))
                         ).click()
                     else:
-                        WebDriverWait(browser, 2*MESSAGE_DT).until(
-                            EC.presence_of_element_located((By.XPATH, XPATH_SEND_MESSAGE_FIELD))
+                        WebDriverWait(browser, 2*utils.MESSAGE_DT).until(
+                            EC.presence_of_element_located((By.XPATH, utils.XPATH_SEND_MESSAGE_FIELD))
                         ).send_keys(text)
-                        WebDriverWait(browser, 2*MESSAGE_DT).until(
-                            EC.presence_of_element_located((By.XPATH, XPATH_SEND_MESSAGE_FIELD))
+                        WebDriverWait(browser, 2*utils.MESSAGE_DT).until(
+                            EC.presence_of_element_located((By.XPATH, utils.XPATH_SEND_MESSAGE_FIELD))
                         ).send_keys(Keys.ENTER)
-                    time.sleep(MESSAGE_DT)  # Aguarda para assegurar o envio da mensagem
+                    time.sleep(utils.MESSAGE_DT)  # Aguarda para assegurar o envio da mensagem
                 status_list.append("Sucesso")  # Se o envio foi bem-sucedido
             except Exception as e:
                 # Check if the message might have been sent despite an exception

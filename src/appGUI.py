@@ -6,12 +6,9 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox, Text, ttk
 import pandas as pd
 from PIL import Image, ImageTk
+import utils
 
-WINDOWS_SIZE = "1080x720"
 bg_color = "#26657b"
-button_color = "#ffb444"
-border_color = "#e69500"  # Border color (this should match the background or complement it)
-hover_color = "#ff9800"
 if "nt" == os.name:
     ICON = "icon.ico"    # for windows
 else:
@@ -22,7 +19,7 @@ ctk.set_default_color_theme("blue")  # Options: "blue", "dark-blue", "green"
 
 
 class BaseWindow:
-    def __init__(self, master, title, size=WINDOWS_SIZE, report=None):
+    def __init__(self, master, title, size=utils.WINDOWS_SIZE, report=None):
         self.master = master
         self.master.title(title)
         self.master.geometry(size)
@@ -47,20 +44,20 @@ class MessageWindow:
 
         # Set up the GUI
         self.root.title("CASDbot")
-        self.root.geometry(WINDOWS_SIZE)
+        self.root.geometry(utils.WINDOWS_SIZE)
         self.root.configure(fg_color=bg_color)
         self.root.wm_iconbitmap(ICON)
 
         # Button common style
         button_style = {
             "corner_radius": 8,  # Slightly rounded corners for a smoother look
-            "fg_color": button_color,  # Background color
+            "fg_color": utils.button_color,  # Background color
             "height": 30,  # Height of the button
             "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
             "text_color": "white",  # Text color
             "border_width": 2,  # Border width to create the raised effect
-            "border_color": border_color,  # Border color (this should match the background or complement it)
-            "hover_color": hover_color
+            "border_color": utils.border_color,  # Border color (this should match the background or complement it)
+            "hover_color": utils.hover_color
         }
 
         # "Back" button in the top-left corner
@@ -164,13 +161,13 @@ class WelcomeWindow(BaseWindow):
 
         button_style = {
             "corner_radius": 8,  # Slightly rounded corners for a smoother look
-            "fg_color": button_color,  # Background color
+            "fg_color": utils.button_color,  # Background color
             "height": 60,  # Height of the button
             "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
             "text_color": "white",  # Text color
             "border_width": 2,  # Border width to create the raised effect
-            "border_color": border_color,  # Border color (this should match the background or complement it)
-            "hover_color": hover_color
+            "border_color": utils.border_color,  # Border color (this should match the background or complement it)
+            "hover_color": utils.hover_color
         }
 
         # Place the button directly on the master, ensuring it's on top
@@ -258,13 +255,13 @@ class SelectionWindow(BaseWindow):
         # Button common style
         button_style = {
             "corner_radius": 8,  # Slightly rounded corners for a smoother look
-            "fg_color": button_color,  # Background color
+            "fg_color": utils.button_color,  # Background color
             "height": 60,  # Height of the button
             "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
             "text_color": "white",  # Text color
             "border_width": 2,  # Border width to create the raised effect
-            "border_color": border_color,  # Border color (this should match the background or complement it)
-            "hover_color": hover_color
+            "border_color": utils.border_color,  # Border color (this should match the background or complement it)
+            "hover_color": utils.hover_color
         }
 
         # Create and place buttons directly on the master window (on top of the background image)
@@ -391,13 +388,13 @@ class SendMessageTemplateWindow(MessageWindow):
         # Button common style
         button_style = {
             "corner_radius": 8,  # Slightly rounded corners for a smoother look
-            "fg_color": button_color,  # Background color
+            "fg_color": utils.button_color,  # Background color
             "height": 30,  # Height of the button
             "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
             "text_color": "white",  # Text color
             "border_width": 2,  # Border width to create the raised effect
-            "border_color": border_color,  # Border color (this should match the background or complement it)
-            "hover_color": hover_color
+            "border_color": utils.border_color,  # Border color (this should match the background or complement it)
+            "hover_color": utils.hover_color
         }
 
         self.add_file_button = ctk.CTkButton(self.top_frame, text="Adicionar Arquivo", command=self.load_files, **button_style)
@@ -477,13 +474,13 @@ class EmailLoginWindow(BaseWindow):
         
         button_style = {
             "corner_radius": 32,  # Rounded corners
-            "fg_color": button_color,  # Button background color
+            "fg_color": utils.button_color,  # Button background color
             "height": 30,  # Button height
             "font": ("Montserrat", 16, "bold"),  # Font style
             "text_color": "white",  # Text color
             "border_width": 2,  # Border width
-            "border_color": border_color,  # Border color
-            "hover_color": hover_color  # Hover color
+            "border_color": utils.border_color,  # Border color
+            "hover_color": utils.hover_color  # Hover color
         }
 
         # Back button in the top-left corner
@@ -577,13 +574,13 @@ class SendEmailTemplateWindow(MessageWindow):
         
         button_style = {
             "corner_radius": 32,  # Rounded corners
-            "fg_color": button_color,  # Button background color
+            "fg_color": utils.button_color,  # Button background color
             "height": 30,  # Button height
             "font": ("Montserrat", 16, "bold"),  # Font style
             "text_color": "white",  # Text color
             "border_width": 2,  # Border width
-            "border_color": border_color,  # Border color
-            "hover_color": hover_color  # Hover color
+            "border_color": utils.border_color,  # Border color
+            "hover_color": utils.hover_color  # Hover color
         }
         
         self.add_file_button = ctk.CTkButton(self.top_frame, text="Adicionar Arquivo", command=self.load_files, **button_style)
@@ -660,13 +657,13 @@ class ReviewWindow(BaseWindow):
         # Button common style
         button_style = {
             "corner_radius": 8,  # Slightly rounded corners for a smoother look
-            "fg_color": button_color,  # Background color
+            "fg_color": utils.button_color,  # Background color
             "height": 30,  # Height of the button
             "font": ("Montserrat", 20, "bold"),  # Bold text with Montserrat font
             "text_color": "white",  # Text color
             "border_width": 2,  # Border width to create the raised effect
-            "border_color": border_color,  # Border color (this should match the background or complement it)
-            "hover_color": hover_color
+            "border_color": utils.border_color,  # Border color (this should match the background or complement it)
+            "hover_color": utils.hover_color
         }
         # "Back" button in the top-left corner
         self.back_button = ctk.CTkButton(
