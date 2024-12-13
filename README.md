@@ -7,4 +7,7 @@ Para executar o projeto, faça os seguintes comandos:
 - poetry install
 - python src/appGUI.py
 
+Ou faça o download do aplicativo executável através do link em
+- download_exe.txt
+
   
